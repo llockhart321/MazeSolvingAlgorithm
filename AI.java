@@ -41,7 +41,7 @@ public class AI
    }  
    
    
-   t1_GraphB theGraph;
+   Mood_GraphB theGraph;
    
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //setup code for your AI goes here.
@@ -67,7 +67,7 @@ public class AI
       // getIsCollionable - whether a particular tile can be moved through.
 
       //creating a graph
-      theGraph = new t1_GraphB(currentLevel);
+      theGraph = new Mood_GraphB(currentLevel);
 
    }
    
@@ -143,14 +143,14 @@ public class AI
    
    //I did these are inner classes, but you don't have to do. 
    // you must put your team name + underscore (like P1_ as a prefix to whatever your classes are)
-   public class t1_GraphB
+   public class Mood_GraphB
    {
  
-      ArrayList<t1_Node> theNodes = new ArrayList<t1_Node>();
-      ArrayList<t1_Node> breakNodes = new ArrayList<t1_Node>();
+      ArrayList<Mood_Node> theNodes = new ArrayList<Mood_Node>();
+      ArrayList<Mood_Node> breakNodes = new ArrayList<Mood_Node>();
    
       //creating the graph as we talked about in class.
-      public t1_GraphB(Level.LevelIterator graphToCreate)
+      public Mood_GraphB(Level.LevelIterator graphToCreate)
       {
          HashMap<String,String> isThereATileThere = new HashMap<String,String>();
       
@@ -173,7 +173,7 @@ public class AI
             Level.TileWrapper tw = graphToCreate.getNext();
             if(isThereATileThere.get(tw.getX()+"_"+(tw.getY()-1))== null)
             {
-               theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30-30));
+               theNodes.add(new Mood_Node(tw.getX()*30, tw.getY()*30-30));
                
                //keep track of a list of break nodes as well
                if(tw.getIsBreak())
@@ -197,8 +197,8 @@ public class AI
             {
                if(i != j)
                {
-                  t1_Node n1 = theNodes.get(i);
-                  t1_Node n2 = theNodes.get(j);
+                  Mood_Node n1 = theNodes.get(i);
+                  Mood_Node n2 = theNodes.get(j);
                
                   double d = Math.sqrt((n1.getX()-n2.getX())*(n1.getX()-n2.getX()) + (n1.getY()-n2.getY())*(n1.getY()-n2.getY()));
                
@@ -259,7 +259,7 @@ public class AI
          
          for(int i=0;i<theNodes.size();i++)
          {
-            t1_Node n1 = theNodes.get(i);
+            Mood_Node n1 = theNodes.get(i);
 
             double d = Math.sqrt((n1.getX()-x)*(n1.getX()-x) + (n1.getY()-y)*(n1.getY()-y));
 
@@ -290,14 +290,14 @@ public class AI
       }
       
       
-      t1_Node start=null;
-      t1_Node end = null;
+      Mood_Node start=null;
+      Mood_Node end = null;
       
-      public void dijkstra(t1_Node start, t1_Node end)
+      public void dijkstra(Mood_Node start, Mood_Node end)
       {
          //unweighted dijkstra
-         t1_Node current = start;
-         LinkedList<t1_Node> myQueue = new LinkedList<t1_Node>(); //use priority queue in weighted dijsktra
+         Mood_Node current = start;
+         LinkedList<Mood_Node> myQueue = new LinkedList<Mood_Node>(); //use priority queue in weighted dijsktra
          myQueue.addLast(current);
          
          while(myQueue.size()>0 && current != end)
@@ -306,7 +306,7 @@ public class AI
             myQueue.removeFirst();
             for(int i=0;i<current.getSize();i++)
             {
-               t1_Node temp = current.get(i);
+               Mood_Node temp = current.get(i);
                if(!temp.isInQueue())
                {
                   myQueue.addLast(temp);
@@ -357,10 +357,10 @@ public class AI
    
    }
    
-   public class t1_Node
+   public class Mood_Node
    {
       //connections between nodes
-      ArrayList<t1_Node> connections = new ArrayList<t1_Node>();
+      ArrayList<Mood_Node> connections = new ArrayList<Mood_Node>();
    
       int x,y;
       
@@ -371,7 +371,7 @@ public class AI
       double currentBreakAmount=0; //in my program -10 on a tile means not broken or not breakable (use tw.getIsBreak() to deteremine the diff). -9 in my implementaion means not breakable. and a positive number is how much time is left
       double maxBreakAmount=0;
       
-      public t1_Node(int _x, int _y)
+      public Mood_Node(int _x, int _y)
       {
          x = _x;
          y = _y;
@@ -395,7 +395,7 @@ public class AI
          return x+"_"+y;
       }
    
-      public void addConnection(t1_Node toAdd)
+      public void addConnection(Mood_Node toAdd)
       {
          connections.add(toAdd);
       }
@@ -428,7 +428,7 @@ public class AI
       }
       boolean inQueue = false;
       
-      public t1_Node get(int i)
+      public Mood_Node get(int i)
       {
          return connections.get(i);
       }
@@ -483,14 +483,14 @@ public class AI
          gc.fillOval(x+8,y+8,14,14);
       }
       
-      t1_Node backPointer=null;
+      Mood_Node backPointer=null;
       
-      public void setBackPointer(t1_Node theThing)
+      public void setBackPointer(Mood_Node theThing)
       {
          backPointer = theThing;
       }
       
-      public t1_Node getBackPointer()
+      public Mood_Node getBackPointer()
       {
          return backPointer;
       }

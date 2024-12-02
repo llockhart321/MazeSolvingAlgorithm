@@ -6,6 +6,7 @@ midair2 0.0 1.0 1.0 1.0 0.0 0.5 1.0 1.0 bubble.png true 1 breaktile 0.5
 erase 0.0 0.0 0.0 1.0 0.0 1.0 0.0 1.0 erase.png true 0 
 tileplacements
 ground 0 4
+goal -4 10
 midair2 -4 11
 midair2 -3 11
 midair2 -2 11
@@ -14,9 +15,6 @@ ground 9 2
 ground 9 3
 ground 0 5
 ground 0 6
-ground 0 7
-ground 0 8
-ground 0 9
 ground 6 5
 midair2 6 8
 start 7 6
@@ -24,7 +22,6 @@ midair2 7 8
 midair 7 9
 ground 9 7
 ground 9 8
-goal 0 10
 midair2 0 11
 ground 1 11
 ground 2 11
