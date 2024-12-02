@@ -42,8 +42,11 @@ public class AI
    
    
    t1_GraphB theGraph;
+<<<<<<< HEAD
    
    // what the player is doing at the start of the game
+=======
+>>>>>>> 57c16dcbe6e8dbdec61a3a9357302bf1fff02705
    
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //setup code for your AI goes here.
@@ -145,7 +148,12 @@ public class AI
    
    //I did these are inner classes, but you don't have to do. 
    // you must put your team name + underscore (like P1_ as a prefix to whatever your classes are)
+<<<<<<< HEAD
    public class t1_GraphB{
+=======
+   public class t1_GraphB
+   {
+>>>>>>> 57c16dcbe6e8dbdec61a3a9357302bf1fff02705
  
       ArrayList<t1_Node> theNodes = new ArrayList<t1_Node>();
       ArrayList<t1_Node> breakNodes = new ArrayList<t1_Node>();
@@ -175,9 +183,13 @@ public class AI
             theNodes.add(new t1_Node(15, 20));
             if(isThereATileThere.get(tw.getX()+"_"+(tw.getY()-1))== null)
             {
+<<<<<<< HEAD
                
                theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30-30));
                
+=======
+               theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30-30));
+>>>>>>> 57c16dcbe6e8dbdec61a3a9357302bf1fff02705
                
                //keep track of a list of break nodes as well
                if(tw.getIsBreak())
