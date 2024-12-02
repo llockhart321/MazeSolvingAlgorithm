@@ -69,7 +69,7 @@ public class Main extends Application {
     Level myLevel = new Level();
     
     ArrayList<Player> thePlayers = new ArrayList<Player>();
-    
+    Player thePlayer = null;
     private static boolean LOCK = false;
     public static boolean isLocked()
     {
@@ -187,7 +187,7 @@ public class Main extends Application {
         }
         
         
-        //origianl testing code to verify it could handle 10k tiles. It was a nice fire-y diagonsals.
+        //origianl testing code to verify it could handle 10k tiles. It was nice fire-y diagonsals.
         
         /*myLevel.addTile(new Tile(new Color(1,0,0,1), new Color(.5,.5,.5,1), 0,0));
         myLevel.addTile(new Tile(new Color(1,1,0,1), new Color(0,0,0,1), 1,0));
@@ -250,8 +250,16 @@ public class Main extends Application {
          case S:
             down_b = true;
              break;
+             
+         case G:
+            if(thePlayer != null) thePlayer.setDownA(true);
+             break;
+         case J:
+            if(thePlayer != null) thePlayer.setDownD(true);
+             break;
          case SPACE:
             jump = true;
+            if(thePlayer != null) thePlayer.setDownJump(true);
             break;
       }
       //System.out.println("keypress");
@@ -274,6 +282,12 @@ public class Main extends Application {
              break;
          case S:
             down_b = false;
+             break;
+         case G:
+            if(thePlayer != null) thePlayer.setDownA(false);
+             break;
+         case J:
+            if(thePlayer != null) thePlayer.setDownD(false);
              break;
       }
       //System.out.println("keyrelease");
@@ -706,7 +720,7 @@ public class Main extends Application {
             {
                for(int i=0;i<thePlayers.size();i++)
                {
-                  ((AIPlayer)thePlayers.get(i)).clicked((int)mx+(int)scrollx,(int)my+(int)scrolly);
+                  ((Player)thePlayers.get(i)).clicked((int)mx+(int)scrollx,(int)my+(int)scrolly);
                }   
             }     
          }
@@ -758,7 +772,7 @@ public class Main extends Application {
       
       thePlayers.clear();
       thePlayers.add(new AIPlayer(playerx*30,playery*30, new AI()));
-      //thePlayers.add(new AIPlayer(playerx*30+15,playery*30+15, new AIRight()));
+      thePlayers.add(thePlayer = new Player(playerx*30,playery*30));
    
       playerLevels.clear();
    
@@ -772,7 +786,7 @@ public class Main extends Application {
       for(int i=0;i<thePlayers.size();i++)
       {
          LOCK=true;
-         ((AIPlayer)thePlayers.get(i)).start(playerLevels.get(i),thePlayers.get(i));
+         ((Player)thePlayers.get(i)).start(playerLevels.get(i),thePlayers.get(i));
          LOCK=false;
       }
    }
@@ -781,4 +795,5 @@ public class Main extends Application {
    {
       state = GameState.EDITOR;
    }
+   
 }

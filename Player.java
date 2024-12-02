@@ -35,8 +35,8 @@ public class Player extends GameObject
    
    public void drawMe(GraphicsContext gc)
    {
-      gc.setFill(Color.GREEN);
-      gc.fillRect(x,y,30,30);
+      gc.setFill(Color.YELLOW);
+      gc.fillRect(x,y,29,29);
    }
    
    boolean atGoal = false;
@@ -54,5 +54,65 @@ public class Player extends GameObject
    public boolean getAtGoal()
    {
       return atGoal;
+   }
+   
+   boolean downa;
+   public void setDownA(boolean b)
+   {
+      downa = b;
+   }
+   
+   boolean downd;
+   public void setDownD(boolean b)
+   {
+      downd = b;
+   }
+   
+   boolean downjump;
+   public void setDownJump(boolean b)
+   {
+      downjump=b;
+   }
+   
+   public boolean isADown()
+   {
+      return downa;
+   }
+   
+   public boolean isDDown()
+   {
+      return downd;
+   }
+   
+   public boolean isJumpDown()
+   {
+      return downjump;
+   }
+   
+   public void jumped()
+   {
+      //nothing here
+      downjump = false;
+   }
+   
+   public void runEachTick(Level currentLevel, Player p)
+   {
+      //nothing here
+   }
+   
+   public void start(Level currentLevel, Player p)
+   {
+      //nothing here
+   }
+   
+   public void clicked(int x, int y)
+   {
+
+   }
+   
+   public String getName()
+   {
+      return "Keyboard-controlled player";
+   
    }
 }

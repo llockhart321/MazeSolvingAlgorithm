@@ -70,11 +70,11 @@ public abstract class GameObject
    
       //lock out the AIs from calling certain methods. Not used anymore.
       theMain.lock();
-      ((AIPlayer)thePlayer).runEachTick(theLevel, thePlayer);
+      ((Player)thePlayer).runEachTick(theLevel, thePlayer);
       theMain.unlock();
       
       //check if the AI wants to jump
-      if(((AIPlayer)this).isJumpDown())
+      if(((Player)this).isJumpDown())
       {
          if(this.isGrounded())
          {
@@ -82,11 +82,11 @@ public abstract class GameObject
          }
          
          //inform the AI he jumped (or tried to jump).
-         ((AIPlayer)this).jumped();
+         ((Player)this).jumped();
       }
       
       //get the AI's current control setup for left and right
-      int leftright = ((((AIPlayer)this).isADown() ? -1 : 0) + (((AIPlayer)this).isDDown() ? 1 : 0 ));
+      int leftright = ((((Player)this).isADown() ? -1 : 0) + (((Player)this).isDDown() ? 1 : 0 ));
    
       //handle jump
       jump*=.95f;
