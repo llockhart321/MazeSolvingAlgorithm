@@ -43,6 +43,8 @@ public class AI
    
    t1_GraphB theGraph;
    
+   // what the player is doing at the start of the game
+   
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //setup code for your AI goes here.
    public void start(Level.LevelIterator currentLevel, double px, double py)
@@ -473,7 +475,7 @@ public class AI
          }
          else if(currentBreakAmount == -9)
          {
-            gc.setFill(Color.CYAN); //someoen really wanted Cyan, don't remember who.
+            gc.setFill(fillColor); //someoen really wanted Cyan, don't remember who.
          }
          else
          {
