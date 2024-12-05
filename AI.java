@@ -145,8 +145,9 @@ public class AI
    
    //I did these are inner classes, but you don't have to do. 
    // you must put your team name + underscore (like P1_ as a prefix to whatever your classes are)
-   public class t1_GraphB{
 
+   public class t1_GraphB
+   {
  
       ArrayList<t1_Node> theNodes = new ArrayList<t1_Node>();
       ArrayList<t1_Node> breakNodes = new ArrayList<t1_Node>();
@@ -176,10 +177,8 @@ public class AI
             
             if(isThereATileThere.get(tw.getX()+"_"+(tw.getY()-1))== null)
             {
-               theNodes.add(new t1_Node(15, 15)); 
-               theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30-30));
-               //theNodes.add(new t1_Node(15, 15)); 
                
+               theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30-30));
                
                //keep track of a list of break nodes as well
                if(tw.getIsBreak())
