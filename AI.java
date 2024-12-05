@@ -23,6 +23,7 @@ import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.paint.ImagePattern;
 
+
 public class AI
 {
    //this is for the image
@@ -42,8 +43,6 @@ public class AI
    
    
    t1_GraphB theGraph;
-   
-   // what the player is doing at the start of the game
    
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //setup code for your AI goes here.
@@ -81,16 +80,55 @@ public class AI
       //xv and yv is the current velocity
       //jump is how much "jump" will get added the next physics step (>0 is in the act of jumping)
       //isGrounded is whether the player is currently on the ground (i.e., will jump if you set jumpDown=true).
-
+      //System.out.println("start tick");
 
       theGraph.updateBreak(currentLevel);
-   
-      //set these variables if you want your AI to move in a particular way. Setting these vars is the only way to control the player. I.e., these are the only three controls.
-      aDown = true;
-      dDown = false;
-      jumpDown = false;
       
-      //so goes left
+      t1_Node whereIAm = theGraph.nodeAt(px,py);
+      t1_Node goalNode = theGraph.getGoal();
+      
+      if(whereIAm != null && goalNode != null)
+      {
+         ArrayList<t1_Node> tempList = theGraph.dijkstra(whereIAm,goalNode);
+         
+         if(tempList.size()>1)
+         {
+            t1_Node whereIWantToGoNext = tempList.get(tempList.size()-2);
+            
+            t1_MovementType way = whereIAm.howGetTo(whereIWantToGoNext);
+            
+            if(way == t1_MovementType.RIGHT)
+            {
+               aDown = false;
+               dDown = true;
+               jumpDown = false;          
+            }
+            else if(way == t1_MovementType.LEFT)
+            {
+               aDown = true;
+               dDown = false;
+               jumpDown = false;               
+            }
+            else
+            {
+               aDown = false;
+               dDown = false;
+               jumpDown = false;                 
+            }
+         }
+      }
+      
+      /*System.out.println("START");
+      System.out.println("AT: "+whereIAm.getX()+" "+whereIAm.getY());
+      for(int i=0;i<tempList.size();i++)
+      {
+         System.out.println( tempList.get(i).getX()+ " "+tempList.get(i).getY());
+      }*/
+      
+
+      
+      //whereIAm.clicked(-1);
+      //System.out.println("end tick");
    }
    
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
@@ -145,12 +183,13 @@ public class AI
    
    //I did these are inner classes, but you don't have to do. 
    // you must put your team name + underscore (like P1_ as a prefix to whatever your classes are)
-
    public class t1_GraphB
    {
  
       ArrayList<t1_Node> theNodes = new ArrayList<t1_Node>();
       ArrayList<t1_Node> breakNodes = new ArrayList<t1_Node>();
+      
+      t1_Node goal;
    
       //creating the graph as we talked about in class.
       public t1_GraphB(Level.LevelIterator graphToCreate)
@@ -163,43 +202,42 @@ public class AI
          while(graphToCreate.hasNext())
          {
             Level.TileWrapper tw = graphToCreate.getNext();
-            
             isThereATileThere.put(tw.getX()+"_"+tw.getY(),"YES!");
-
+            
+            
          }
-         
+
          graphToCreate.resetIterator();
-         
-         
+         // In AI.java, inside t1_GraphB constructor
          while(graphToCreate.hasNext())
          {
             Level.TileWrapper tw = graphToCreate.getNext();
             
-            if(isThereATileThere.get(tw.getX()+"_"+(tw.getY()-1))== null)
-            {
-               
-               theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30-30));
-               
-               //keep track of a list of break nodes as well
-               if(tw.getIsBreak())
-               {
-                  breakNodes.add(theNodes.get(theNodes.size()-1));
-                  
-                  theNodes.get(theNodes.size()-1).setBreakMax(tw.getMaxBreakTimer());
-               }
-               else
-               {
-                  theNodes.get(theNodes.size()-1).setBreakAmount(-9); //-10 means not stepped on but breakable (according to my game) and -9 here means not breakable 
-
-               }
+            // Check each position above the block up to 6 spaces
+            for(int heightAbove = 1; heightAbove <= 6; heightAbove++) {
+                if(isThereATileThere.get(tw.getX()+"_"+(tw.getY()-heightAbove)) == null)
+                {
+                    // Create node heightAbove blocks above current block
+                    theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30-heightAbove*30));
+                    
+                    // Only track break info for the node directly above (heightAbove == 1)
+                    if(heightAbove == 1 && tw.getIsBreak())
+                    {
+                        breakNodes.add(theNodes.get(theNodes.size()-1));
+                        theNodes.get(theNodes.size()-1).setBreakMax(tw.getMaxBreakTimer());
+                    }
+                    else
+                    {
+                        theNodes.get(theNodes.size()-1).setBreakAmount(-9);
+                    }
+                }
             }
-         }   
-                         
+         }                     
 
          //N^2, could be better. Sort the nodes first by either x or y and just do the nodes that are nearby in the list.
          for(int i=0;i<theNodes.size();i++)
          {
-            for(int j=0;j<theNodes.size();j++)
+            for(int j=i+1;j<theNodes.size();j++)
             {
                if(i != j)
                {
@@ -212,11 +250,55 @@ public class AI
                   {
                      n1.addConnection(n2);
                      n2.addConnection(n1);
+
+                     n1.addMovementTime(1);
+                     n2.addMovementTime(2);
+                                          
+                     if(n1.getX() < n2.getX())
+                     {
+                        n1.addMovementType(t1_MovementType.RIGHT);
+                        n2.addMovementType(t1_MovementType.LEFT);
+                        
+                     }
+                     else
+                     {
+                        n1.addMovementType(t1_MovementType.LEFT);
+                        n2.addMovementType(t1_MovementType.RIGHT);                    
+                     }
                   }
                }
             }
          }
      
+      }
+      
+      public t1_Node getGoal()
+      {
+         return goal;
+      }
+      
+      public double distance(double x1, double y1, double x2, double y2)
+      {
+         double d = Math.sqrt((x1 - x2)*(x1-x2) + (y1-y2)*(y1-y2));
+         return d;  
+      }
+      
+      public t1_Node nodeAt(double x, double y)
+      {
+         int shortestIndex = 0;
+         double shortestDistance = distance(x,y,theNodes.get(0).getX(),theNodes.get(0).getY());
+         
+         for(int i=1;i<theNodes.size();i++)
+         {
+            double t;
+            if((t = distance(x,y,theNodes.get(i).getX(),theNodes.get(i).getY())) < shortestDistance)
+            {
+               shortestIndex = i;
+               shortestDistance = t;
+            }
+         }
+         
+         return theNodes.get(shortestIndex);
       }
       
       
@@ -227,6 +309,22 @@ public class AI
          {
             theNodes.get(i).draw(gc);
          }
+      }
+      
+      public void removeNodeFromGraph(t1_Node theNode)
+      {
+         //remove the node from the main list
+         for(int i=0;i<theNodes.size();i++)
+         {
+            if(theNodes.get(i) == theNode)
+            {
+               theNodes.remove(i);
+               break;
+            }
+         }
+         
+         //remove the connections
+         theNode.destroy();
       }
       
       public void updateBreak(Level.LevelIterator currentLevel)
@@ -243,6 +341,7 @@ public class AI
             
             if(tw == null) //so the node no longer exsits. this means it broke.
             {
+               removeNodeFromGraph(breakNodes.get(i));
                breakNodes.remove(i);
                i--;
             }
@@ -299,12 +398,19 @@ public class AI
       t1_Node start=null;
       t1_Node end = null;
       
-      public void dijkstra(t1_Node start, t1_Node end)
+      ArrayList<t1_Node> path = new ArrayList<t1_Node>();
+      
+      int runCounter=0;
+      
+      public ArrayList<t1_Node> dijkstra(t1_Node start, t1_Node end)
       {
          //unweighted dijkstra
          t1_Node current = start;
          LinkedList<t1_Node> myQueue = new LinkedList<t1_Node>(); //use priority queue in weighted dijsktra
          myQueue.addLast(current);
+         
+         int currentRun = runCounter++;
+         current.setLastUsed(runCounter);
          
          while(myQueue.size()>0 && current != end)
          {
@@ -313,10 +419,10 @@ public class AI
             for(int i=0;i<current.getSize();i++)
             {
                t1_Node temp = current.get(i);
-               if(!temp.isInQueue())
+               if(temp.getLastUsed() != runCounter)
                {
                   myQueue.addLast(temp);
-                  temp.setIsInQueue(true);
+                  temp.setLastUsed(runCounter);
                   temp.setBackPointer(current);
                   //set distance in weighted dijkstra
                }
@@ -326,8 +432,7 @@ public class AI
                }
             }
          }
-       
-       
+         path.clear();
         
          //trace back back in the graph. I put a little safety code in place.
          current = end;
@@ -337,36 +442,36 @@ public class AI
             
             while(current != start && current != null)    
             {
-               //System.out.println(current.getName());
-               current.clicked(2);
+               path.add(current);
                current = current.getBackPointer();
             }
-            //System.out.println(current.getName());
-            
             if(current != null)
             {
-               current.clicked(2);
+               path.add(current);
             }
             else
             {
-               System.out.println("Current is null in AI.java");
+               //System.out.println("Current is null in AI.java");
             }
                  
          }
          else
          {
-            System.out.println("End is null in AI.java");
+            //System.out.println("End is null in AI.java");
          }
+         
+         return path;
       }
-  
-   
-   
    }
+   
+   public enum t1_MovementType {LEFT,RIGHT,NONE};
    
    public class t1_Node
    {
       //connections between nodes
       ArrayList<t1_Node> connections = new ArrayList<t1_Node>();
+      ArrayList<t1_MovementType> howToMove = new ArrayList<t1_MovementType>();
+      ArrayList<Double> timeToMove = new ArrayList<Double>();
    
       int x,y;
       
@@ -406,6 +511,16 @@ public class AI
          connections.add(toAdd);
       }
       
+      public void addMovementType(t1_MovementType toAdd)
+      {
+         howToMove.add(toAdd);
+      }
+      
+      public void addMovementTime(double d)
+      {
+         timeToMove.add(d);
+      }
+      
       //for keeping track of break tiles.
       public void setBreakAmount(double d)
       {
@@ -423,14 +538,16 @@ public class AI
          return connections.size();
       }
       
-      public boolean isInQueue()
+      int lastUsed = -1;
+      
+      public int getLastUsed()
       {
-         return inQueue;
+         return lastUsed;
       }
       
-      public void setIsInQueue(boolean val)
+      public void setLastUsed(int val)
       {
-         inQueue = val;
+         lastUsed = val;
       }
       boolean inQueue = false;
       
@@ -441,11 +558,12 @@ public class AI
       
       Color fillColor = Color.YELLOW;
       
+      boolean isClicked = false;
       
       //clicked method to change colors. this is really for debugging
       public void clicked(int option)
       {
-      
+         isClicked = true;
          fillColor = new Color(0,1,0,1);
          
          if(option == 0)
@@ -464,13 +582,24 @@ public class AI
    
       public void draw(GraphicsContext gc)
       {
-         
-         //draw all this nodes's connections. NOTE: my implementation doesn't remove connections from each node when a node breaks.
-         for(int i=0;i<connections.size();i++)
+         //if(isClicked)
          {
-            gc.setStroke(Color.RED);
-            gc.setLineWidth(3);
-            gc.strokeLine(x+8+7,y+8+7,connections.get(i).x+8+7,connections.get(i).y+8+7);
+            //draw all this nodes's connections. NOTE: my implementation doesn't remove connections from each node when a node breaks.
+            for(int i=0;i<connections.size();i++)
+            {
+               if(howToMove.get(i) == t1_MovementType.LEFT)
+               {
+                  gc.setStroke(Color.BLUE);
+               }
+               else if (howToMove.get(i) == t1_MovementType.RIGHT)
+               {
+                  gc.setStroke(Color.RED);
+               }
+            
+               
+               gc.setLineWidth(3);
+               gc.strokeLine(x+8+7,y+8+7,connections.get(i).x+8+7,connections.get(i).y+8+7);
+            }
          }
          
          if(currentBreakAmount == -10)
@@ -501,5 +630,32 @@ public class AI
          return backPointer;
       }
       
+      public t1_MovementType howGetTo(t1_Node other)
+      {
+         for(int i=0;i<connections.size();i++)
+         {
+            if(connections.get(i)==other)
+            {
+               return howToMove.get(i);
+            }
+         }
+         
+         return t1_MovementType.NONE;
+      }
+      
+      //this method should remove all the connections from corresponding arrayLists
+      public void destroy()
+      {
+         for(int i=0;i<connections.size();i++)
+         {
+            t1_Node temp = connections.get(i);
+            if(temp == this)
+            {
+               temp.connections.remove(i);
+               temp.howToMove.remove(i);
+               temp.timeToMove.remove(i);
+            }
+         }
+      }
    }
 }
