@@ -160,8 +160,6 @@ public class Main extends Application {
                tileTemplates.add(new Tile(new Color(rf,gf,bf,af), new Color(ro,go,bo,ao), -1,-1,name, fname,isCol,head));
             }
             
-            //System.out.println("Tiles loaded: "+tileTemplates.size());
-            
             while(scan.hasNext())
             {
                String name = scan.next();
