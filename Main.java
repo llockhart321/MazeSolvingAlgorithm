@@ -249,10 +249,10 @@ public class Main extends Application {
             down_b = true;
              break;
              
-         case Q:
+         case G:
             if(thePlayer != null) thePlayer.setDownA(true);
              break;
-         case E:
+         case J:
             if(thePlayer != null) thePlayer.setDownD(true);
              break;
          case SPACE:
@@ -281,10 +281,10 @@ public class Main extends Application {
          case S:
             down_b = false;
              break;
-         case Q:
+         case G:
             if(thePlayer != null) thePlayer.setDownA(false);
              break;
-         case E:
+         case J:
             if(thePlayer != null) thePlayer.setDownD(false);
              break;
       }

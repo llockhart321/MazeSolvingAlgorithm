@@ -1,1 +1,54 @@
+start 0.5 0.5 0.5 1.0 0.5 1.0 0.5 1.0 start.png false 1 start 
+goal 0.0 0.5 1.0 1.0 0.0 1.0 1.0 1.0 goal.png false 1 goal 
+ground 0.0 0.5 0.0 1.0 0.0 0.0 0.0 1.0 bubble.png true 0 
+midair 1.0 1.0 1.0 1.0 1.0 0.5 1.0 1.0 bubble.png true 1 breaktile 0.5 
+midair2 0.0 1.0 1.0 1.0 0.0 0.5 1.0 1.0 bubble.png true 1 breaktile 0.5 
+erase 0.0 0.0 0.0 1.0 0.0 1.0 0.0 1.0 erase.png true 0 
 tileplacements
+ground 0 4
+ground -4 11
+midair2 -3 11
+midair2 -2 11
+midair2 -1 11
+ground 9 2
+ground 9 3
+ground 0 5
+ground 0 6
+ground 0 7
+ground 0 8
+ground 6 5
+midair2 6 8
+start 7 5
+midair2 7 8
+midair 7 9
+ground 9 7
+ground 9 8
+midair2 0 11
+midair2 1 11
+midair2 2 11
+ground 3 11
+ground 4 11
+ground 5 11
+ground 6 11
+ground 7 11
+ground 8 11
+ground 9 11
+goal 10 10
+ground 10 11
+ground 11 11
+ground 12 11
+ground 13 11
+ground 14 11
+ground 15 11
+ground -13 10
+ground -13 11
+ground -12 11
+ground -11 11
+ground -10 11
+ground -9 11
+ground -8 11
+ground -7 11
+ground -6 11
+ground -5 11
+ground -13 8
+ground -13 9
