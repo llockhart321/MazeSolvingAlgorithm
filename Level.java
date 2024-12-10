@@ -122,9 +122,9 @@ public class Level
       int myChunkx = x/5;
       int myChunky = y/5;
       
-      for(int i=myChunkx-3;i<=myChunkx+5;i++)
+      for(int i=myChunkx-3;i<=myChunkx+6;i++)
       {
-         for(int j=myChunky-2;j<=myChunky+2;j++)
+         for(int j=myChunky-3;j<=myChunky+3;j++)
          {
             Chunk c = map.get(i+"_"+j);
             if(c != null)
