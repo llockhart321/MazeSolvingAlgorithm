@@ -23,7 +23,6 @@ import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.paint.ImagePattern;
 
-
 public class AI
 {
    //this is for the image
@@ -42,7 +41,7 @@ public class AI
    }  
    
    
-   t1_GraphB theGraph;
+   Mood_GraphB theGraph;
    
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //setup code for your AI goes here.
@@ -68,7 +67,7 @@ public class AI
       // getIsCollionable - whether a particular tile can be moved through.
 
       //creating a graph
-      theGraph = new t1_GraphB(currentLevel);
+      theGraph = new Mood_GraphB(currentLevel);
 
    }
    
@@ -84,26 +83,26 @@ public class AI
 
       theGraph.updateBreak(currentLevel);
       
-      t1_Node whereIAm = theGraph.nodeAt(px,py);
-      t1_Node goalNode = theGraph.getGoal();
+      Mood_Node whereIAm = theGraph.nodeAt(px,py);
+      Mood_Node goalNode = theGraph.getGoal();
       
       if(whereIAm != null && goalNode != null)
       {
-         ArrayList<t1_Node> tempList = theGraph.dijkstra(whereIAm,goalNode);
+         ArrayList<Mood_Node> tempList = theGraph.dijkstra(whereIAm,goalNode);
          
          if(tempList.size()>1)
          {
-            t1_Node whereIWantToGoNext = tempList.get(tempList.size()-2);
+            Mood_Node whereIWantToGoNext = tempList.get(tempList.size()-2);
             
-            t1_MovementType way = whereIAm.howGetTo(whereIWantToGoNext);
+            Mood_MovementType way = whereIAm.howGetTo(whereIWantToGoNext);
             
-            if(way == t1_MovementType.RIGHT)
+            if(way == Mood_MovementType.RIGHT)
             {
                aDown = false;
                dDown = true;
                jumpDown = false;          
             }
-            else if(way == t1_MovementType.LEFT)
+            else if(way == Mood_MovementType.LEFT)
             {
                aDown = true;
                dDown = false;
@@ -183,18 +182,18 @@ public class AI
    
    //I did these are inner classes, but you don't have to do. 
    // you must put your team name + underscore (like P1_ as a prefix to whatever your classes are)
-   public class t1_GraphB
+   public class Mood_GraphB
    {
  
-      ArrayList<t1_Node> theNodes = new ArrayList<t1_Node>();
-      ArrayList<t1_Node> breakNodes = new ArrayList<t1_Node>();
+      ArrayList<Mood_Node> theNodes = new ArrayList<Mood_Node>();
+      ArrayList<Mood_Node> breakNodes = new ArrayList<Mood_Node>();
       
-      t1_Node goal;
+      Mood_Node goal;
    
       //creating the graph as we talked about in class.
-      public t1_GraphB(Level.LevelIterator graphToCreate)
+      public Mood_GraphB(Level.LevelIterator graphToCreate)
       {
-         HashMap<String,String> tileLocations = new HashMap<String,String>();
+         HashMap<String,String> isThereATileThere = new HashMap<String,String>();
       
       
          //this is soooo much nice than the previous code we did in class. Iterators are your friends :)
@@ -202,61 +201,41 @@ public class AI
          while(graphToCreate.hasNext())
          {
             Level.TileWrapper tw = graphToCreate.getNext();
-            tileLocations.put(tw.getX()+"_"+tw.getY(),"YES!");
+            isThereATileThere.put(tw.getX()+"_"+tw.getY(),"YES!");
             
             
          }
 
          graphToCreate.resetIterator();
-         
-         while(graphToCreate.hasNext()) {
-            Level.TileWrapper tw = graphToCreate.getNext();
-            
-            // Create node on the tile itself
-            theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30));
-            
-            // Check if there's space above for additional nodes (up to 5 spaces)
-            for(int i = 1; i <= 5; i++) {
-               String aboveKey = tw.getX() + "_" + (tw.getY()-i);
-               if(!tileLocations.containsKey(aboveKey)) {
-                  // Create node above the tile
-                  theNodes.add(new t1_Node(tw.getX()*30, (tw.getY()-i)*30));
-               }
-            }
-            
-            // Track break nodes
-            if(tw.getIsBreak()) {
-               t1_Node breakNode = theNodes.get(theNodes.size()-1);
-               breakNodes.add(breakNode);
-               breakNode.setBreakMax(tw.getMaxBreakTimer());
-            }
-         }                   
-
-         // In AI.java, inside t1_GraphB constructor
          while(graphToCreate.hasNext())
          {
             Level.TileWrapper tw = graphToCreate.getNext();
-            
-            // Check each position above the block up to 6 spaces
-            for(int heightAbove = 1; heightAbove <= 6; heightAbove++) {
-                if(isThereATileThere.get(tw.getX()+"_"+(tw.getY()-heightAbove)) == null)
-                {
-                    // Create node heightAbove blocks above current block
-                    theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30-heightAbove*30));
-                    
-                    // Only track break info for the node directly above (heightAbove == 1)
-                    if(heightAbove == 1 && tw.getIsBreak())
-                    {
-                        breakNodes.add(theNodes.get(theNodes.size()-1));
-                        theNodes.get(theNodes.size()-1).setBreakMax(tw.getMaxBreakTimer());
-                    }
-                    else
-                    {
-                        theNodes.get(theNodes.size()-1).setBreakAmount(-9);
-                    }
-                }
+            if(isThereATileThere.get(tw.getX()+"_"+(tw.getY()-1))== null)
+            {
+               if(!tw.getIsEnd() && !tw.getIsStart())
+                  theNodes.add(new Mood_Node(tw.getX()*30, tw.getY()*30-30));
+               else
+                  theNodes.add(new Mood_Node(tw.getX()*30, tw.getY()*30));
+               
+               if(tw.getIsEnd())
+               {
+                  goal = theNodes.get(theNodes.size()-1);
+               }
+               
+               //keep track of a list of break nodes as well
+               if(tw.getIsBreak())
+               {
+                  breakNodes.add(theNodes.get(theNodes.size()-1));
+                  
+                  theNodes.get(theNodes.size()-1).setBreakMax(tw.getMaxBreakTimer());
+               }
+               else
+               {
+                  theNodes.get(theNodes.size()-1).setBreakAmount(-9); //-10 means not stepped on but breakable (according to my game) and -9 here means not breakable 
+
+               }
             }
-         }                     
+         }                    
 
          //N^2, could be better. Sort the nodes first by either x or y and just do the nodes that are nearby in the list.
          for(int i=0;i<theNodes.size();i++)
@@ -265,8 +244,8 @@ public class AI
             {
                if(i != j)
                {
-                  t1_Node n1 = theNodes.get(i);
-                  t1_Node n2 = theNodes.get(j);
+                  Mood_Node n1 = theNodes.get(i);
+                  Mood_Node n2 = theNodes.get(j);
                
                   double d = Math.sqrt((n1.getX()-n2.getX())*(n1.getX()-n2.getX()) + (n1.getY()-n2.getY())*(n1.getY()-n2.getY()));
                
@@ -280,14 +259,14 @@ public class AI
                                           
                      if(n1.getX() < n2.getX())
                      {
-                        n1.addMovementType(t1_MovementType.RIGHT);
-                        n2.addMovementType(t1_MovementType.LEFT);
+                        n1.addMovementType(Mood_MovementType.RIGHT);
+                        n2.addMovementType(Mood_MovementType.LEFT);
                         
                      }
                      else
                      {
-                        n1.addMovementType(t1_MovementType.LEFT);
-                        n2.addMovementType(t1_MovementType.RIGHT);                    
+                        n1.addMovementType(Mood_MovementType.LEFT);
+                        n2.addMovementType(Mood_MovementType.RIGHT);                    
                      }
                   }
                }
@@ -296,7 +275,7 @@ public class AI
      
       }
       
-      public t1_Node getGoal()
+      public Mood_Node getGoal()
       {
          return goal;
       }
@@ -307,7 +286,7 @@ public class AI
          return d;  
       }
       
-      public t1_Node nodeAt(double x, double y)
+      public Mood_Node nodeAt(double x, double y)
       {
          int shortestIndex = 0;
          double shortestDistance = distance(x,y,theNodes.get(0).getX(),theNodes.get(0).getY());
@@ -335,7 +314,7 @@ public class AI
          }
       }
       
-      public void removeNodeFromGraph(t1_Node theNode)
+      public void removeNodeFromGraph(Mood_Node theNode)
       {
          //remove the node from the main list
          for(int i=0;i<theNodes.size();i++)
@@ -388,7 +367,7 @@ public class AI
          
          for(int i=0;i<theNodes.size();i++)
          {
-            t1_Node n1 = theNodes.get(i);
+            Mood_Node n1 = theNodes.get(i);
 
             double d = Math.sqrt((n1.getX()-x)*(n1.getX()-x) + (n1.getY()-y)*(n1.getY()-y));
 
@@ -419,18 +398,18 @@ public class AI
       }
       
       
-      t1_Node start=null;
-      t1_Node end = null;
+      Mood_Node start=null;
+      Mood_Node end = null;
       
-      ArrayList<t1_Node> path = new ArrayList<t1_Node>();
+      ArrayList<Mood_Node> path = new ArrayList<Mood_Node>();
       
       int runCounter=0;
       
-      public ArrayList<t1_Node> dijkstra(t1_Node start, t1_Node end)
+      public ArrayList<Mood_Node> dijkstra(Mood_Node start, Mood_Node end)
       {
          //unweighted dijkstra
-         t1_Node current = start;
-         LinkedList<t1_Node> myQueue = new LinkedList<t1_Node>(); //use priority queue in weighted dijsktra
+         Mood_Node current = start;
+         LinkedList<Mood_Node> myQueue = new LinkedList<Mood_Node>(); //use priority queue in weighted dijsktra
          myQueue.addLast(current);
          
          int currentRun = runCounter++;
@@ -442,7 +421,7 @@ public class AI
             myQueue.removeFirst();
             for(int i=0;i<current.getSize();i++)
             {
-               t1_Node temp = current.get(i);
+               Mood_Node temp = current.get(i);
                if(temp.getLastUsed() != runCounter)
                {
                   myQueue.addLast(temp);
@@ -488,13 +467,13 @@ public class AI
       }
    }
    
-   public enum t1_MovementType {LEFT,RIGHT,NONE};
+   public enum Mood_MovementType {LEFT,RIGHT,NONE};
    
-   public class t1_Node
+   public class Mood_Node
    {
       //connections between nodes
-      ArrayList<t1_Node> connections = new ArrayList<t1_Node>();
-      ArrayList<t1_MovementType> howToMove = new ArrayList<t1_MovementType>();
+      ArrayList<Mood_Node> connections = new ArrayList<Mood_Node>();
+      ArrayList<Mood_MovementType> howToMove = new ArrayList<Mood_MovementType>();
       ArrayList<Double> timeToMove = new ArrayList<Double>();
    
       int x,y;
@@ -506,7 +485,7 @@ public class AI
       double currentBreakAmount=0; //in my program -10 on a tile means not broken or not breakable (use tw.getIsBreak() to deteremine the diff). -9 in my implementaion means not breakable. and a positive number is how much time is left
       double maxBreakAmount=0;
       
-      public t1_Node(int _x, int _y)
+      public Mood_Node(int _x, int _y)
       {
          x = _x;
          y = _y;
@@ -530,12 +509,12 @@ public class AI
          return x+"_"+y;
       }
    
-      public void addConnection(t1_Node toAdd)
+      public void addConnection(Mood_Node toAdd)
       {
          connections.add(toAdd);
       }
       
-      public void addMovementType(t1_MovementType toAdd)
+      public void addMovementType(Mood_MovementType toAdd)
       {
          howToMove.add(toAdd);
       }
@@ -575,7 +554,7 @@ public class AI
       }
       boolean inQueue = false;
       
-      public t1_Node get(int i)
+      public Mood_Node get(int i)
       {
          return connections.get(i);
       }
@@ -611,11 +590,11 @@ public class AI
             //draw all this nodes's connections. NOTE: my implementation doesn't remove connections from each node when a node breaks.
             for(int i=0;i<connections.size();i++)
             {
-               if(howToMove.get(i) == t1_MovementType.LEFT)
+               if(howToMove.get(i) == Mood_MovementType.LEFT)
                {
                   gc.setStroke(Color.BLUE);
                }
-               else if (howToMove.get(i) == t1_MovementType.RIGHT)
+               else if (howToMove.get(i) == Mood_MovementType.RIGHT)
                {
                   gc.setStroke(Color.RED);
                }
@@ -642,19 +621,19 @@ public class AI
          gc.fillOval(x+8,y+8,14,14);
       }
       
-      t1_Node backPointer=null;
+      Mood_Node backPointer=null;
       
-      public void setBackPointer(t1_Node theThing)
+      public void setBackPointer(Mood_Node theThing)
       {
          backPointer = theThing;
       }
       
-      public t1_Node getBackPointer()
+      public Mood_Node getBackPointer()
       {
          return backPointer;
       }
       
-      public t1_MovementType howGetTo(t1_Node other)
+      public Mood_MovementType howGetTo(Mood_Node other)
       {
          for(int i=0;i<connections.size();i++)
          {
@@ -664,7 +643,7 @@ public class AI
             }
          }
          
-         return t1_MovementType.NONE;
+         return Mood_MovementType.NONE;
       }
       
       //this method should remove all the connections from corresponding arrayLists
@@ -672,7 +651,7 @@ public class AI
       {
          for(int i=0;i<connections.size();i++)
          {
-            t1_Node temp = connections.get(i);
+            Mood_Node temp = connections.get(i);
             if(temp == this)
             {
                temp.connections.remove(i);

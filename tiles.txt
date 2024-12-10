@@ -257,6 +257,7 @@ ground 38 15
 ground 38 17
 ground 39 15
 ground 39 17
+start 15 -21
 ground 15 -20
 ground 16 -20
 ground 17 -20
@@ -361,6 +362,7 @@ ground 31 -5
 ground 32 -5
 ground 33 -5
 ground 34 -5
+midair 7 -25
 ground 5 -20
 ground 6 -20
 ground 7 -20
@@ -521,6 +523,7 @@ ground 73 -4
 ground 73 -3
 ground 73 -2
 ground 73 -1
+midair 23 -25
 fakegoal 21 -3
 ground 22 -4
 ground 22 -3
