@@ -23,6 +23,7 @@ import javafx.stage.Stage;
 import javafx.scene.image.Image;
 import javafx.scene.paint.ImagePattern;
 
+
 public class AI
 {
    //this is for the image
@@ -207,6 +208,7 @@ public class AI
          }
 
          graphToCreate.resetIterator();
+         
          while(graphToCreate.hasNext()) {
             Level.TileWrapper tw = graphToCreate.getNext();
             
@@ -229,6 +231,32 @@ public class AI
                breakNode.setBreakMax(tw.getMaxBreakTimer());
             }
          }                   
+
+         // In AI.java, inside t1_GraphB constructor
+         while(graphToCreate.hasNext())
+         {
+            Level.TileWrapper tw = graphToCreate.getNext();
+            
+            // Check each position above the block up to 6 spaces
+            for(int heightAbove = 1; heightAbove <= 6; heightAbove++) {
+                if(isThereATileThere.get(tw.getX()+"_"+(tw.getY()-heightAbove)) == null)
+                {
+                    // Create node heightAbove blocks above current block
+                    theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30-heightAbove*30));
+                    
+                    // Only track break info for the node directly above (heightAbove == 1)
+                    if(heightAbove == 1 && tw.getIsBreak())
+                    {
+                        breakNodes.add(theNodes.get(theNodes.size()-1));
+                        theNodes.get(theNodes.size()-1).setBreakMax(tw.getMaxBreakTimer());
+                    }
+                    else
+                    {
+                        theNodes.get(theNodes.size()-1).setBreakAmount(-9);
+                    }
+                }
+            }
+         }                     
 
          //N^2, could be better. Sort the nodes first by either x or y and just do the nodes that are nearby in the list.
          for(int i=0;i<theNodes.size();i++)
