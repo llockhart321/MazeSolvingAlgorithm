@@ -73,62 +73,47 @@ public class AI
    
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //code that runs before each tick goes here.
-   public void runEachTick(Level.LevelIterator currentLevel, double px, double py, double xv, double yv, double jump, boolean isGrounded)
+public void runEachTick(Level.LevelIterator currentLevel, double px, double py, double xv, double yv, double jump, boolean isGrounded)
+{
+   theGraph.updateBreak(currentLevel);
+   
+   Mood_Node whereIAm = theGraph.nodeAt(px,py);
+   Mood_Node goalNode = theGraph.getGoal();
+   
+   if(whereIAm != null && goalNode != null)
    {
-      //reminder: px and py are the upper left coord of the player.
-      //xv and yv is the current velocity
-      //jump is how much "jump" will get added the next physics step (>0 is in the act of jumping)
-      //isGrounded is whether the player is currently on the ground (i.e., will jump if you set jumpDown=true).
-      //System.out.println("start tick");
-
-      theGraph.updateBreak(currentLevel);
+      ArrayList<Mood_Node> tempList = theGraph.dijkstra(whereIAm,goalNode);
       
-      Mood_Node whereIAm = theGraph.nodeAt(px,py);
-      Mood_Node goalNode = theGraph.getGoal();
-      
-      if(whereIAm != null && goalNode != null)
+      if(tempList.size()>1)
       {
-         ArrayList<Mood_Node> tempList = theGraph.dijkstra(whereIAm,goalNode);
+         Mood_Node whereIWantToGoNext = tempList.get(tempList.size()-2);
          
-         if(tempList.size()>1)
+         // Check if next node is above current node
+         boolean needToJump = whereIWantToGoNext.getY() < whereIAm.getY();
+         
+         Mood_MovementType way = whereIAm.howGetTo(whereIWantToGoNext);
+         
+         if(way == Mood_MovementType.RIGHT)
          {
-            Mood_Node whereIWantToGoNext = tempList.get(tempList.size()-2);
-            
-            Mood_MovementType way = whereIAm.howGetTo(whereIWantToGoNext);
-            
-            if(way == Mood_MovementType.RIGHT)
-            {
-               aDown = false;
-               dDown = true;
-               jumpDown = false;          
-            }
-            else if(way == Mood_MovementType.LEFT)
-            {
-               aDown = true;
-               dDown = false;
-               jumpDown = false;               
-            }
-            else
-            {
-               aDown = false;
-               dDown = false;
-               jumpDown = false;                 
-            }
+            aDown = false;
+            dDown = true;
+            jumpDown = needToJump && isGrounded; // Only jump if we need to and we're on ground          
+         }
+         else if(way == Mood_MovementType.LEFT)
+         {
+            aDown = true;
+            dDown = false;
+            jumpDown = needToJump && isGrounded;               
+         }
+         else // NONE movement type - vertical movement
+         {
+            aDown = false;
+            dDown = false;
+            jumpDown = needToJump && isGrounded;                 
          }
       }
-      
-      /*System.out.println("START");
-      System.out.println("AT: "+whereIAm.getX()+" "+whereIAm.getY());
-      for(int i=0;i<tempList.size();i++)
-      {
-         System.out.println( tempList.get(i).getX()+ " "+tempList.get(i).getY());
-      }*/
-      
-
-      
-      //whereIAm.clicked(-1);
-      //System.out.println("end tick");
    }
+}
    
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //whatever you want to draw should be put here.
@@ -182,8 +167,7 @@ public class AI
    
    //I did these are inner classes, but you don't have to do. 
    // you must put your team name + underscore (like P1_ as a prefix to whatever your classes are)
-   public class Mood_GraphB
-   {
+   public class Mood_GraphB{
  
       ArrayList<Mood_Node> theNodes = new ArrayList<Mood_Node>();
       ArrayList<Mood_Node> breakNodes = new ArrayList<Mood_Node>();
@@ -210,32 +194,36 @@ public class AI
          while(graphToCreate.hasNext())
          {
             Level.TileWrapper tw = graphToCreate.getNext();
-            if(isThereATileThere.get(tw.getX()+"_"+(tw.getY()-1))== null)
-            {
-               if(!tw.getIsEnd() && !tw.getIsStart())
-                  theNodes.add(new Mood_Node(tw.getX()*30, tw.getY()*30-30));
-               else
-                  theNodes.add(new Mood_Node(tw.getX()*30, tw.getY()*30));
+            if(tw.getIsEnd() || tw.getIsStart()) {
+               theNodes.add(new Mood_Node(tw.getX()*30, tw.getY()*30));
                
-               if(tw.getIsEnd())
-               {
+               if(tw.getIsEnd()) {
                   goal = theNodes.get(theNodes.size()-1);
                }
                
-               //keep track of a list of break nodes as well
-               if(tw.getIsBreak())
-               {
+               if(tw.getIsBreak()) {
                   breakNodes.add(theNodes.get(theNodes.size()-1));
-                  
                   theNodes.get(theNodes.size()-1).setBreakMax(tw.getMaxBreakTimer());
+               } else {
+                  theNodes.get(theNodes.size()-1).setBreakAmount(-9);
                }
-               else
-               {
-                  theNodes.get(theNodes.size()-1).setBreakAmount(-9); //-10 means not stepped on but breakable (according to my game) and -9 here means not breakable 
-
+            } else {
+               // Add nodes above empty spaces
+               for(int height = 1; height <= 6; height++) {
+                  String aboveKey = tw.getX() + "_" + (tw.getY()-height);
+                  if(isThereATileThere.get(aboveKey) == null) {
+                     theNodes.add(new Mood_Node(tw.getX()*30, tw.getY()*30-height*30));
+                     
+                     if(tw.getIsBreak()) {
+                        breakNodes.add(theNodes.get(theNodes.size()-1));
+                        theNodes.get(theNodes.size()-1).setBreakMax(tw.getMaxBreakTimer());
+                     } else {
+                        theNodes.get(theNodes.size()-1).setBreakAmount(-9);
+                     }
+                  }
                }
-            }
-         }                    
+         }
+         }
 
          //N^2, could be better. Sort the nodes first by either x or y and just do the nodes that are nearby in the list.
          for(int i=0;i<theNodes.size();i++)
@@ -261,7 +249,11 @@ public class AI
                      {
                         n1.addMovementType(Mood_MovementType.RIGHT);
                         n2.addMovementType(Mood_MovementType.LEFT);
-                        
+                     }
+                     else if(n1.getY() < n2.getY())
+                     {
+                        n1.addMovementType(Mood_MovementType.UP);
+                        n2.addMovementType(Mood_MovementType.LEFT);
                      }
                      else
                      {
@@ -467,7 +459,7 @@ public class AI
       }
    }
    
-   public enum Mood_MovementType {LEFT,RIGHT,NONE};
+   public enum Mood_MovementType {LEFT,RIGHT,NONE,UP};
    
    public class Mood_Node
    {
