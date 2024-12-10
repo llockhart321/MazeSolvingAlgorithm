@@ -27,6 +27,10 @@ public class AI
 {
    //this is for the image
    ImagePattern ptn;
+   ArrayList<t1_Node> currentPath = null;
+   t1_Node lastPosition = null;
+   t1_Node lastGoal = null;
+   int currentPathIndex = 0;
    
    public AI()
    {
@@ -37,15 +41,23 @@ public class AI
    //give it a good name :). It will appear above you AI when I test it in class.
    public String getName()
    {
-      return "Jack";
+      return "Lisan al Gaib";
    }  
    
    
-   Mood_GraphB theGraph;
+   t1_GraphB theGraph;
    
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //setup code for your AI goes here.
-   public void start(Level.LevelIterator currentLevel, double px, double py)
+   
+   public void start(Level.LevelIterator currentLevel, double px, double py) {
+      theGraph = new t1_GraphB(currentLevel);
+      currentPath = null;
+      lastPosition = null;
+      lastGoal = null;
+      currentPathIndex = 0;
+   }
+      /*public void start(Level.LevelIterator currentLevel, double px, double py)
    {
       //reminder: px and py are the upper left coord of the player.
       //two classes you need to deal with:
@@ -67,59 +79,82 @@ public class AI
       // getIsCollionable - whether a particular tile can be moved through.
 
       //creating a graph
-      theGraph = new Mood_GraphB(currentLevel);
+      theGraph = new t1_GraphB(currentLevel);
 
-   }
+   }*/
    
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //code that runs before each tick goes here.
-public void runEachTick(Level.LevelIterator currentLevel, double px, double py, double xv, double yv, double jump, boolean isGrounded)
-{
-   theGraph.updateBreak(currentLevel);
-   
-   Mood_Node whereIAm = theGraph.nodeAt(px,py);
-   Mood_Node goalNode = theGraph.getGoal();
-   
-   if(whereIAm != null && goalNode != null)
-   {
-      ArrayList<Mood_Node> tempList = theGraph.dijkstra(whereIAm,goalNode);
+   public void runEachTick(Level.LevelIterator currentLevel, double px, double py, double xv, double yv, double jump, boolean isGrounded) {
+      theGraph.updateBreak(currentLevel);
       
-      if(tempList.size()>1)
-      {
-         Mood_Node whereIWantToGoNext = tempList.get(tempList.size()-2);
+      t1_Node whereIAm = theGraph.nodeAt(px, py);
+      t1_Node goalNode = theGraph.getGoal();
+      
+      if(whereIAm != null && goalNode != null) {
+         // Check if we need a new path
+         boolean needNewPath = (currentPath == null || 
+                              whereIAm != lastPosition || 
+                              goalNode != lastGoal);
          
-         // Check if next node is above current node
-         boolean needToJump = whereIWantToGoNext.getY() < whereIAm.getY();
-         
-         Mood_MovementType way = whereIAm.howGetTo(whereIWantToGoNext);
-         
-         if(way == Mood_MovementType.RIGHT)
-         {
-            aDown = false;
-            dDown = true;
-            jumpDown = needToJump && isGrounded; // Only jump if we need to and we're on ground          
+         if(needNewPath) {
+            currentPath = theGraph.dijkstra(whereIAm, goalNode);
+            lastPosition = whereIAm;
+            lastGoal = goalNode;
+            // The path goes from goal to start, so we start at the last index
+            currentPathIndex = currentPath.size() - 1;
          }
-         else if(way == Mood_MovementType.LEFT)
-         {
-            aDown = true;
-            dDown = false;
-            jumpDown = needToJump && isGrounded;               
-         }
-         else // NONE movement type - vertical movement
-         {
-            aDown = false;
-            dDown = false;
-            jumpDown = needToJump && isGrounded;                 
+         
+         if(currentPath != null && currentPath.size() > 1) {
+            // Calculate which nodes we're moving between
+            t1_Node currentNode = currentPath.get(currentPathIndex);
+            t1_Node targetNode = currentPath.get(currentPathIndex - 1);
+            
+            // Calculate distance to current target node
+            double distanceToTarget = Math.sqrt(
+               Math.pow((px - targetNode.getX()), 2) + 
+               Math.pow((py - targetNode.getY()), 2)
+            );
+            
+            // If we're close enough to current target, move to next node
+            if(distanceToTarget < 40 && currentPathIndex > 1) {
+               currentPathIndex--;
+               targetNode = currentPath.get(currentPathIndex - 1);
+            }
+            
+            // Check if next node is above current node
+            boolean needToJump = targetNode.getY() < currentNode.getY();
+            
+            t1_MovementType way = currentNode.howGetTo(targetNode);
+            
+            if(way == t1_MovementType.RIGHT) {
+               aDown = false;
+               dDown = true;
+               jumpDown = needToJump && isGrounded;          
+            }
+            else if(way == t1_MovementType.LEFT) {
+               aDown = true;
+               dDown = false;
+               jumpDown = needToJump && isGrounded;               
+            }
+            else {  // NONE movement type - vertical movement
+               aDown = false;
+               dDown = false;
+               jumpDown = needToJump && isGrounded;                 
+            }
          }
       }
-   }
-}
-   
+   }  
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //whatever you want to draw should be put here.
-   public void drawAIInfo(GraphicsContext gc)
-   {
+   public void drawAIInfo(GraphicsContext gc) {
       theGraph.draw(gc);
+      
+      if(currentPath != null && currentPathIndex > 0) {
+         t1_Node target = currentPath.get(currentPathIndex - 1);
+         gc.setFill(Color.PURPLE);
+         gc.fillOval(target.getX() + 4, target.getY() + 4, 22, 22);
+      }
    }
    
 
@@ -167,15 +202,15 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
    
    //I did these are inner classes, but you don't have to do. 
    // you must put your team name + underscore (like P1_ as a prefix to whatever your classes are)
-   public class Mood_GraphB{
+   public class t1_GraphB{
  
-      ArrayList<Mood_Node> theNodes = new ArrayList<Mood_Node>();
-      ArrayList<Mood_Node> breakNodes = new ArrayList<Mood_Node>();
+      ArrayList<t1_Node> theNodes = new ArrayList<t1_Node>();
+      ArrayList<t1_Node> breakNodes = new ArrayList<t1_Node>();
       
-      Mood_Node goal;
+      t1_Node goal;
    
       //creating the graph as we talked about in class.
-      public Mood_GraphB(Level.LevelIterator graphToCreate)
+      public t1_GraphB(Level.LevelIterator graphToCreate)
       {
          HashMap<String,String> isThereATileThere = new HashMap<String,String>();
       
@@ -196,7 +231,7 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
             
             // Add node at tile level for special tiles
             if(tw.getIsEnd() || tw.getIsStart()) {
-               theNodes.add(new Mood_Node(tw.getX()*30, tw.getY()*30));
+               theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30));
                
                if(tw.getIsEnd()) {
                   goal = theNodes.get(theNodes.size()-1);
@@ -224,7 +259,7 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
                   
                   // Skip if we already have a node here
                   boolean nodeExists = false;
-                  for(Mood_Node existing : theNodes) {
+                  for(t1_Node existing : theNodes) {
                      if(existing.getX() == checkX*30 && existing.getY() == checkY*30) {
                         nodeExists = true;
                         break;
@@ -232,9 +267,9 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
                   }
                   
                   if(!nodeExists) {
-                     theNodes.add(new Mood_Node(checkX*30, checkY*30));
+                     theNodes.add(new t1_Node(checkX*30, checkY*30));
                      if(tw.getIsBreak()) {
-                        Mood_Node newNode = theNodes.get(theNodes.size()-1);
+                        t1_Node newNode = theNodes.get(theNodes.size()-1);
                         breakNodes.add(newNode);
                         newNode.setBreakMax(tw.getMaxBreakTimer());
                      } else {
@@ -252,8 +287,8 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
             {
                if(i != j)
                {
-                  Mood_Node n1 = theNodes.get(i);
-                  Mood_Node n2 = theNodes.get(j);
+                  t1_Node n1 = theNodes.get(i);
+                  t1_Node n2 = theNodes.get(j);
                
                   double d = Math.sqrt((n1.getX()-n2.getX())*(n1.getX()-n2.getX()) + (n1.getY()-n2.getY())*(n1.getY()-n2.getY()));
                
@@ -267,18 +302,18 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
                                           
                      if(n1.getX() < n2.getX())
                      {
-                        n1.addMovementType(Mood_MovementType.RIGHT);
-                        n2.addMovementType(Mood_MovementType.LEFT);
+                        n1.addMovementType(t1_MovementType.RIGHT);
+                        n2.addMovementType(t1_MovementType.LEFT);
                      }
                      else if(n1.getY() < n2.getY())
                      {
-                        n1.addMovementType(Mood_MovementType.UP);
-                        n2.addMovementType(Mood_MovementType.LEFT);
+                        n1.addMovementType(t1_MovementType.UP);
+                        n2.addMovementType(t1_MovementType.DOWN);
                      }
                      else
                      {
-                        n1.addMovementType(Mood_MovementType.LEFT);
-                        n2.addMovementType(Mood_MovementType.RIGHT);                    
+                        n1.addMovementType(t1_MovementType.LEFT);
+                        n2.addMovementType(t1_MovementType.RIGHT);                    
                      }
                   }
                }
@@ -287,7 +322,7 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
      
       }
       
-      public Mood_Node getGoal()
+      public t1_Node getGoal()
       {
          return goal;
       }
@@ -298,7 +333,7 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
          return d;  
       }
       
-      public Mood_Node nodeAt(double x, double y)
+      public t1_Node nodeAt(double x, double y)
       {
          int shortestIndex = 0;
          double shortestDistance = distance(x,y,theNodes.get(0).getX(),theNodes.get(0).getY());
@@ -326,7 +361,7 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
          }
       }
       
-      public void removeNodeFromGraph(Mood_Node theNode)
+      public void removeNodeFromGraph(t1_Node theNode)
       {
          //remove the node from the main list
          for(int i=0;i<theNodes.size();i++)
@@ -379,7 +414,7 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
          
          for(int i=0;i<theNodes.size();i++)
          {
-            Mood_Node n1 = theNodes.get(i);
+            t1_Node n1 = theNodes.get(i);
 
             double d = Math.sqrt((n1.getX()-x)*(n1.getX()-x) + (n1.getY()-y)*(n1.getY()-y));
 
@@ -410,18 +445,18 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
       }
       
       
-      Mood_Node start=null;
-      Mood_Node end = null;
+      t1_Node start=null;
+      t1_Node end = null;
       
-      ArrayList<Mood_Node> path = new ArrayList<Mood_Node>();
+      ArrayList<t1_Node> path = new ArrayList<t1_Node>();
       
       int runCounter=0;
       
-      public ArrayList<Mood_Node> dijkstra(Mood_Node start, Mood_Node end)
+      public ArrayList<t1_Node> dijkstra(t1_Node start, t1_Node end)
       {
          //unweighted dijkstra
-         Mood_Node current = start;
-         LinkedList<Mood_Node> myQueue = new LinkedList<Mood_Node>(); //use priority queue in weighted dijsktra
+         t1_Node current = start;
+         LinkedList<t1_Node> myQueue = new LinkedList<t1_Node>(); //use priority queue in weighted dijsktra
          myQueue.addLast(current);
          
          int currentRun = runCounter++;
@@ -433,7 +468,7 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
             myQueue.removeFirst();
             for(int i=0;i<current.getSize();i++)
             {
-               Mood_Node temp = current.get(i);
+               t1_Node temp = current.get(i);
                if(temp.getLastUsed() != runCounter)
                {
                   myQueue.addLast(temp);
@@ -479,13 +514,13 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
       }
    }
    
-   public enum Mood_MovementType {LEFT,RIGHT,NONE,UP};
+   public enum t1_MovementType {LEFT,RIGHT,NONE,UP,DOWN};
    
-   public class Mood_Node
+   public class t1_Node
    {
       //connections between nodes
-      ArrayList<Mood_Node> connections = new ArrayList<Mood_Node>();
-      ArrayList<Mood_MovementType> howToMove = new ArrayList<Mood_MovementType>();
+      ArrayList<t1_Node> connections = new ArrayList<t1_Node>();
+      ArrayList<t1_MovementType> howToMove = new ArrayList<t1_MovementType>();
       ArrayList<Double> timeToMove = new ArrayList<Double>();
    
       int x,y;
@@ -497,7 +532,7 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
       double currentBreakAmount=0; //in my program -10 on a tile means not broken or not breakable (use tw.getIsBreak() to deteremine the diff). -9 in my implementaion means not breakable. and a positive number is how much time is left
       double maxBreakAmount=0;
       
-      public Mood_Node(int _x, int _y)
+      public t1_Node(int _x, int _y)
       {
          x = _x;
          y = _y;
@@ -521,12 +556,12 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
          return x+"_"+y;
       }
    
-      public void addConnection(Mood_Node toAdd)
+      public void addConnection(t1_Node toAdd)
       {
          connections.add(toAdd);
       }
       
-      public void addMovementType(Mood_MovementType toAdd)
+      public void addMovementType(t1_MovementType toAdd)
       {
          howToMove.add(toAdd);
       }
@@ -566,7 +601,7 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
       }
       boolean inQueue = false;
       
-      public Mood_Node get(int i)
+      public t1_Node get(int i)
       {
          return connections.get(i);
       }
@@ -602,11 +637,19 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
             //draw all this nodes's connections. NOTE: my implementation doesn't remove connections from each node when a node breaks.
             for(int i=0;i<connections.size();i++)
             {
-               if(howToMove.get(i) == Mood_MovementType.LEFT)
+               if(howToMove.get(i) == t1_MovementType.LEFT)
                {
                   gc.setStroke(Color.BLUE);
                }
-               else if (howToMove.get(i) == Mood_MovementType.RIGHT)
+               else if(howToMove.get(i) == t1_MovementType.UP)
+               {
+                  gc.setStroke(Color.GREEN);
+               }
+               else if(howToMove.get(i) == t1_MovementType.DOWN)
+               {
+                  gc.setStroke(Color.YELLOW);
+               }
+               else if (howToMove.get(i) == t1_MovementType.RIGHT)
                {
                   gc.setStroke(Color.RED);
                }
@@ -633,29 +676,29 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
          gc.fillOval(x+8,y+8,14,14);
       }
       
-      Mood_Node backPointer=null;
+      t1_Node backPointer=null;
       
-      public void setBackPointer(Mood_Node theThing)
+      public void setBackPointer(t1_Node theThing)
       {
          backPointer = theThing;
       }
       
-      public Mood_Node getBackPointer()
+      public t1_Node getBackPointer()
       {
          return backPointer;
       }
       
-      public Mood_MovementType howGetTo(Mood_Node other)
+      public t1_MovementType howGetTo(t1_Node other)
       {
          for(int i=0;i<connections.size();i++)
          {
-            if(connections.get(i)==other)
+            if(connections.get(i) == other)
             {
                return howToMove.get(i);
             }
          }
          
-         return Mood_MovementType.NONE;
+         return t1_MovementType.NONE;
       }
       
       //this method should remove all the connections from corresponding arrayLists
@@ -663,7 +706,7 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
       {
          for(int i=0;i<connections.size();i++)
          {
-            Mood_Node temp = connections.get(i);
+            t1_Node temp = connections.get(i);
             if(temp == this)
             {
                temp.connections.remove(i);

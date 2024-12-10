@@ -408,6 +408,7 @@ public class Main extends Application {
                gc.strokeRect(squarex*30,squarey*30,31,31);
             }
             
+            
             //remove the translate change. So that the next calls are drawn at absolute positions
             gc.restore();       
             
