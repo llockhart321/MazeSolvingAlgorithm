@@ -191,9 +191,10 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
          }
 
          graphToCreate.resetIterator();
-         while(graphToCreate.hasNext())
-         {
+         while(graphToCreate.hasNext()) {
             Level.TileWrapper tw = graphToCreate.getNext();
+            
+            // Add node at tile level for special tiles
             if(tw.getIsEnd() || tw.getIsStart()) {
                theNodes.add(new Mood_Node(tw.getX()*30, tw.getY()*30));
                
@@ -207,22 +208,41 @@ public void runEachTick(Level.LevelIterator currentLevel, double px, double py, 
                } else {
                   theNodes.get(theNodes.size()-1).setBreakAmount(-9);
                }
-            } else {
-               // Add nodes above empty spaces
-               for(int height = 1; height <= 6; height++) {
-                  String aboveKey = tw.getX() + "_" + (tw.getY()-height);
-                  if(isThereATileThere.get(aboveKey) == null) {
-                     theNodes.add(new Mood_Node(tw.getX()*30, tw.getY()*30-height*30));
-                     
+               continue;
+            }
+         
+            // For each block, create nodes in a radius
+            for(int xOffset = -7; xOffset <= 7; xOffset++) {  // 7 blocks left and right
+               for(int height = 1; height <= 6; height++) {   // Up to 6 blocks up
+                  int checkX = tw.getX() + xOffset;
+                  int checkY = tw.getY() - height;  // Subtract for height since Y goes down
+                  
+                  // Skip if there's a block here
+                  if(isThereATileThere.get(checkX + "_" + checkY) != null) {
+                     continue;
+                  }
+                  
+                  // Skip if we already have a node here
+                  boolean nodeExists = false;
+                  for(Mood_Node existing : theNodes) {
+                     if(existing.getX() == checkX*30 && existing.getY() == checkY*30) {
+                        nodeExists = true;
+                        break;
+                     }
+                  }
+                  
+                  if(!nodeExists) {
+                     theNodes.add(new Mood_Node(checkX*30, checkY*30));
                      if(tw.getIsBreak()) {
-                        breakNodes.add(theNodes.get(theNodes.size()-1));
-                        theNodes.get(theNodes.size()-1).setBreakMax(tw.getMaxBreakTimer());
+                        Mood_Node newNode = theNodes.get(theNodes.size()-1);
+                        breakNodes.add(newNode);
+                        newNode.setBreakMax(tw.getMaxBreakTimer());
                      } else {
                         theNodes.get(theNodes.size()-1).setBreakAmount(-9);
                      }
                   }
                }
-         }
+            }
          }
 
          //N^2, could be better. Sort the nodes first by either x or y and just do the nodes that are nearby in the list.
