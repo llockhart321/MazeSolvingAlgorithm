@@ -379,19 +379,15 @@ public class AI
                      otherNode.addMovementType(t1_MovementType.DOWN);
                      otherNode.addMovementTime(1);
                      isDirectlyAboveBreak.put(otherNode, true);
-                  } else {
-                     // Add one-way outward connection from break tile to adjacent node
-                     if(breakNode == n1) {
-                        n1.addConnection(n2);
-                        if(Math.abs(n1.getY() - n2.getY()) < 1) {
-                           n1.addMovementType(n1.getX() < n2.getX() ? 
-                              t1_MovementType.RIGHT : t1_MovementType.LEFT);
-                        } else {
-                           n1.addMovementType(n1.getY() < n2.getY() ? 
-                              t1_MovementType.DOWN : t1_MovementType.UP);
-                        }
-                        n1.addMovementTime(1);
+                  } else if(breakNode == n1) {
+                     // Add one-way outward connection FROM break tile TO other node
+                     n1.addConnection(n2);
+                     if(Math.abs(n1.getY() - n2.getY()) < 1) {
+                        n1.addMovementType(n1.getX() < n2.getX() ? t1_MovementType.RIGHT : t1_MovementType.LEFT);
+                     } else {
+                        n1.addMovementType(n1.getY() < n2.getY() ? t1_MovementType.DOWN : t1_MovementType.UP);
                      }
+                     n1.addMovementTime(1);
                   }
                   continue;
                }
@@ -785,19 +781,15 @@ public class AI
          }
       }
    
-    public void draw(GraphicsContext gc)
-{
+    public void draw(GraphicsContext gc) {
     // Draw all this node's connections
-    for(int i=0; i<connections.size(); i++)
-    {
-        t1_Node otherNode = connections.get(i);
-        
+    for(int i=0; i<connections.size(); i++) {
         // Check if this connection is part of the current path
         boolean isPathConnection = false;
         if(AI.this.currentPath != null) {
             for(int j = 0; j < AI.this.currentPath.size() - 1; j++) {
-                if((this == AI.this.currentPath.get(j) && otherNode == AI.this.currentPath.get(j+1)) ||
-                   (this == AI.this.currentPath.get(j+1) && otherNode == AI.this.currentPath.get(j))) {
+                if((this == AI.this.currentPath.get(j) && connections.get(i) == AI.this.currentPath.get(j+1)) ||
+                   (this == AI.this.currentPath.get(j+1) && connections.get(i) == AI.this.currentPath.get(j))) {
                     isPathConnection = true;
                     break;
                 }
@@ -805,28 +797,49 @@ public class AI
         }
         
         if(isPathConnection) {
-            // Path connections are white
             gc.setStroke(Color.WHITE);
         } else {
-            // Normal color logic for non-path connections
-            if(howToMove.get(i) == t1_MovementType.UP) {
-                gc.setStroke(Color.BLUE);
-            }
-            else if(howToMove.get(i) == t1_MovementType.DOWN) {
-                gc.setStroke(Color.RED);
-            }
-            else if(howToMove.get(i) == t1_MovementType.RIGHT || 
-                    howToMove.get(i) == t1_MovementType.LEFT) {
-                gc.setStroke(Color.YELLOW);
+            // Check if this is a bidirectional horizontal connection
+            boolean hasReverseConnection = false;
+            t1_Node otherNode = connections.get(i);
+            t1_MovementType thisDirection = howToMove.get(i);
+            
+            if(thisDirection == t1_MovementType.LEFT || thisDirection == t1_MovementType.RIGHT) {
+                for(int j=0; j<otherNode.connections.size(); j++) {
+                    if(otherNode.connections.get(j) == this) {
+                        hasReverseConnection = true;
+                        break;
+                    }
+                }
             }
             
-            // Check if bidirectional
-            for(int j=0; j<otherNode.connections.size(); j++) {
-                if(otherNode.connections.get(j) == this) {
-                    if((howToMove.get(i) == t1_MovementType.UP && 
-                        otherNode.howToMove.get(j) == t1_MovementType.DOWN) ||
-                       (howToMove.get(i) == t1_MovementType.DOWN && 
-                        otherNode.howToMove.get(j) == t1_MovementType.UP)) {
+            // Set colors based on movement type and direction
+            if(thisDirection == t1_MovementType.RIGHT) {
+                if(hasReverseConnection) {
+                    gc.setStroke(Color.ORANGE); // Bidirectional horizontal
+                } else {
+                    gc.setStroke(Color.YELLOW); // Right only
+                }
+            } else if(thisDirection == t1_MovementType.LEFT) {
+                if(hasReverseConnection) {
+                    gc.setStroke(Color.ORANGE); // Bidirectional horizontal
+                } else {
+                    gc.setStroke(Color.BROWN); // Left only
+                }
+            } else if(thisDirection == t1_MovementType.UP) {
+                gc.setStroke(Color.BLUE);
+            } else if(thisDirection == t1_MovementType.DOWN) {
+                gc.setStroke(Color.RED);
+            }
+            
+            // Check for bidirectional vertical (purple)
+            if(thisDirection == t1_MovementType.UP || thisDirection == t1_MovementType.DOWN) {
+                for(int j=0; j<otherNode.connections.size(); j++) {
+                    if(otherNode.connections.get(j) == this &&
+                       ((thisDirection == t1_MovementType.UP && 
+                         otherNode.howToMove.get(j) == t1_MovementType.DOWN) ||
+                        (thisDirection == t1_MovementType.DOWN && 
+                         otherNode.howToMove.get(j) == t1_MovementType.UP))) {
                         gc.setStroke(Color.PURPLE);
                         break;
                     }
@@ -850,7 +863,8 @@ public class AI
     }
     
     gc.fillOval(x+8, y+8, 14, 14);
-}         t1_Node backPointer=null;
+}
+      t1_Node backPointer=null;
       
       public void setBackPointer(t1_Node theThing)
       {
