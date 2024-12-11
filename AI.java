@@ -241,137 +241,210 @@ public class AI
    
       //creating the graph as we talked about in class.
       public t1_GraphB(Level.LevelIterator graphToCreate) {
-    HashMap<String,String> isThereATileThere = new HashMap<String,String>();
-    
-    // First pass: mark all existing tiles
-    graphToCreate.resetIterator();
-    while(graphToCreate.hasNext()) {
-        Level.TileWrapper tw = graphToCreate.getNext();
-        isThereATileThere.put(tw.getX()+"_"+tw.getY(),"YES!");
-    }
+      HashMap<String,String> isThereATileThere = new HashMap<String,String>();
+      HashMap<t1_Node, Boolean> isVerticalNode = new HashMap<>();
+      HashMap<t1_Node, Boolean> isDirectlyAboveBreak = new HashMap<>();
+      
+      // First pass: mark all existing tiles
+      graphToCreate.resetIterator();
+      while(graphToCreate.hasNext()) {
+         Level.TileWrapper tw = graphToCreate.getNext();
+         isThereATileThere.put(tw.getX()+"_"+tw.getY(),"YES!");
+      }
 
-    graphToCreate.resetIterator();
-    while(graphToCreate.hasNext()) {
-        Level.TileWrapper tw = graphToCreate.getNext();
-        
-        // Add node at tile level for special tiles
-        if(tw.getIsEnd() || tw.getIsStart()) {
-            theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30));
+      // Second pass: create nodes
+      graphToCreate.resetIterator();
+      while(graphToCreate.hasNext()) {
+         Level.TileWrapper tw = graphToCreate.getNext();
+         
+         // Handle special tiles (start/end)
+         if(tw.getIsEnd() || tw.getIsStart()) {
+            t1_Node node = new t1_Node(tw.getX()*30, tw.getY()*30);
+            theNodes.add(node);
+            isVerticalNode.put(node, true);
             
             if(tw.getIsEnd()) {
-                goal = theNodes.get(theNodes.size()-1);
+               goal = node;
             }
             
             if(tw.getIsBreak()) {
-                theNodes.get(theNodes.size()-1);
+               node.setBreakAmount(tw.getBreakTimer());
             } else {
-                theNodes.get(theNodes.size()-1).setBreakAmount(-9);
+               node.setBreakAmount(-9);
             }
             continue;
-        }
-    
-        // For breakable tiles, create a single node in the middle of the tile
-        if(tw.getIsBreak()) {
+         }
+         
+         // Handle break tiles
+         if(tw.getIsBreak()) {
             t1_Node breakNode = new t1_Node(tw.getX()*30, tw.getY()*30 - 15);
             breakNode.setBreakMax(tw.getMaxBreakTimer());
             theNodes.add(breakNode);
             breakNodes.add(breakNode);
+            isVerticalNode.put(breakNode, true);
+            
+            // Create node directly above break tile
+            t1_Node nodeAboveBreak = new t1_Node(tw.getX()*30, (tw.getY()-1)*30);
+            theNodes.add(nodeAboveBreak);
+            isVerticalNode.put(nodeAboveBreak, true);
+            isDirectlyAboveBreak.put(nodeAboveBreak, true);
             continue;
-        }
-        
-        // Regular node generation - now generating more nodes above for downward connections
-        for(int xOffset = -7; xOffset <= 7; xOffset++) {
-            for(int height = 1; height <= 12; height++) {  // Increased to 12 to allow for downward connections
-                int checkX = tw.getX() + xOffset;
-                int checkY = tw.getY() - height;
-                
-                if(isThereATileThere.get(checkX + "_" + checkY) != null) {
-                    continue;
-                }
-                
-                boolean nodeExists = false;
-                for(t1_Node existing : theNodes) {
-                    if(existing.getX() == checkX*30 && existing.getY() == checkY*30) {
-                        nodeExists = true;
-                        break;
-                    }
-                }
-                
-                if(!nodeExists) {
-                    theNodes.add(new t1_Node(checkX*30, checkY*30));
-                    theNodes.get(theNodes.size()-1).setBreakAmount(-9);
-                }
+         }
+         
+         // Generate vertical nodes (up to 6 above)
+         for(int xOffset = -1; xOffset <= 1; xOffset++) {
+            for(int height = 1; height <= 6; height++) {
+               int checkX = tw.getX() + xOffset;
+               int checkY = tw.getY() - height;
+               
+               if(isThereATileThere.get(checkX + "_" + checkY) != null) {
+                  continue;
+               }
+               
+               boolean nodeExists = false;
+               for(t1_Node existing : theNodes) {
+                  if(existing.getX() == checkX*30 && existing.getY() == checkY*30) {
+                     nodeExists = true;
+                     isVerticalNode.put(existing, true);
+                     break;
+                  }
+               }
+               
+               if(!nodeExists) {
+                  t1_Node newNode = new t1_Node(checkX*30, checkY*30);
+                  theNodes.add(newNode);
+                  isVerticalNode.put(newNode, true);
+                  newNode.setBreakAmount(-9);
+               }
             }
-        }
-    }
-
-    // Create directional connections
-    for(int i=0; i<theNodes.size(); i++) {
-        for(int j=0; j<theNodes.size(); j++) {
-            if(i != j) {
-                t1_Node n1 = theNodes.get(i);
-                t1_Node n2 = theNodes.get(j);
-                
-                double distance = Math.sqrt((n1.getX()-n2.getX())*(n1.getX()-n2.getX()) + 
-                                         (n1.getY()-n2.getY())*(n1.getY()-n2.getY()));
-                
-                boolean isBreakTileNode1 = breakNodes.contains(n1);
-                boolean isBreakTileNode2 = breakNodes.contains(n2);
-
-                // Handle break node connections
-                if(isBreakTileNode1 || isBreakTileNode2) {
-                    if(Math.abs(n1.getX() - n2.getX()) < 1) {  // Same X coordinate
-                        // Allow movement down to break nodes from above
-                        if(isBreakTileNode2 && n1.getY() < n2.getY()) {
-                            n1.addConnection(n2);
-                            n1.addMovementType(t1_MovementType.DOWN);
-                            n1.addMovementTime(1);
-                        }
-                        else if(isBreakTileNode1 && n2.getY() < n1.getY()) {
-                            n2.addConnection(n1);
-                            n2.addMovementType(t1_MovementType.DOWN);
-                            n2.addMovementTime(1);
-                        }
-                    }
-                }
-                // Handle regular node connections
-                else if(distance < 35) {
-                    // Horizontal connections - both directions allowed
-                    if(Math.abs(n1.getY() - n2.getY()) < 1) {  // Same Y level
-                        if(n1.getX() < n2.getX()) {
-                            // Right connection
-                            n1.addConnection(n2);
-                            n1.addMovementType(t1_MovementType.RIGHT);
-                            n1.addMovementTime(1);
-                            
-                            // Left connection
-                            n2.addConnection(n1);
-                            n2.addMovementType(t1_MovementType.LEFT);
-                            n2.addMovementTime(1);
-                        }
-                    }
-                    // Vertical connections with directional rules based on height difference
-                    else if(Math.abs(n1.getX() - n2.getX()) < 1) {  // Same X coordinate
-                        int heightDiff = (int)Math.round((n1.getY() - n2.getY()) / 30.0);  // Convert pixel difference to tile height
-                        
-                        if(heightDiff > 0) {  // n1 is below n2
-                            if(heightDiff <= 6) {  // Within 6 tiles - create upward connection
-                                n1.addConnection(n2);
-                                n1.addMovementType(t1_MovementType.UP);
-                                n1.addMovementTime(1);
-                            } else {  // Beyond 6 tiles - create downward connection from upper node
-                                n2.addConnection(n1);
-                                n2.addMovementType(t1_MovementType.DOWN);
-                                n2.addMovementTime(1);
-                            }
-                        }
-                    }
-                }
+         }
+         
+         // Generate horizontal spread nodes (up to 7 left/right)
+         for(int xOffset = -7; xOffset <= 7; xOffset++) {
+            if(xOffset >= -1 && xOffset <= 1) continue;
+            
+            for(int height = 1; height <= 2; height++) {
+               int checkX = tw.getX() + xOffset;
+               int checkY = tw.getY() - height;
+               
+               if(isThereATileThere.get(checkX + "_" + checkY) != null) {
+                  continue;
+               }
+               
+               boolean nodeExists = false;
+               for(t1_Node existing : theNodes) {
+                  if(existing.getX() == checkX*30 && existing.getY() == checkY*30) {
+                     nodeExists = true;
+                     break;
+                  }
+               }
+               
+               if(!nodeExists) {
+                  t1_Node newNode = new t1_Node(checkX*30, checkY*30);
+                  theNodes.add(newNode);
+                  isVerticalNode.put(newNode, false);
+                  newNode.setBreakAmount(-9);
+               }
             }
-        }
-    }
-}   
-      public t1_Node getGoal()
+         }
+      }
+
+      // Create connections
+      for(int i=0; i<theNodes.size(); i++) {
+         for(int j=0; j<theNodes.size(); j++) {
+            if(i == j) continue;
+            
+            t1_Node n1 = theNodes.get(i);
+            t1_Node n2 = theNodes.get(j);
+            
+            double distance = Math.sqrt(
+               Math.pow(n1.getX()-n2.getX(), 2) + 
+               Math.pow(n1.getY()-n2.getY(), 2)
+            );
+            
+            if(distance < 35) {
+               // Handle break tile connections
+               if(breakNodes.contains(n1) || breakNodes.contains(n2)) {
+                  t1_Node breakNode = breakNodes.contains(n1) ? n1 : n2;
+                  t1_Node otherNode = breakNodes.contains(n1) ? n2 : n1;
+                  
+                  // Check if otherNode is directly above break node
+                  boolean isNodeAbove = Math.abs(breakNode.getX() - otherNode.getX()) < 1 && 
+                                      breakNode.getY() > otherNode.getY() &&
+                                      Math.abs(breakNode.getY() - otherNode.getY()) < 35;
+                  
+                  if(isNodeAbove) {
+                     // Only add downward connection from node above to break tile
+                     otherNode.addConnection(breakNode);
+                     otherNode.addMovementType(t1_MovementType.DOWN);
+                     otherNode.addMovementTime(1);
+                     isDirectlyAboveBreak.put(otherNode, true);
+                  } else {
+                     // Add one-way outward connection from break tile to adjacent node
+                     if(breakNode == n1) {
+                        n1.addConnection(n2);
+                        if(Math.abs(n1.getY() - n2.getY()) < 1) {
+                           n1.addMovementType(n1.getX() < n2.getX() ? 
+                              t1_MovementType.RIGHT : t1_MovementType.LEFT);
+                        } else {
+                           n1.addMovementType(n1.getY() < n2.getY() ? 
+                              t1_MovementType.DOWN : t1_MovementType.UP);
+                        }
+                        n1.addMovementTime(1);
+                     }
+                  }
+                  continue;
+               }
+               
+               // Handle regular node connections
+               // Horizontal connections
+               if(Math.abs(n1.getY() - n2.getY()) < 1) {
+                  if(n1.getX() < n2.getX()) {
+                     n1.addConnection(n2);
+                     n1.addMovementType(t1_MovementType.RIGHT);
+                     n1.addMovementTime(1);
+                     
+                     n2.addConnection(n1);
+                     n2.addMovementType(t1_MovementType.LEFT);
+                     n2.addMovementTime(1);
+                  }
+               }
+               // Vertical connections
+               else if(Math.abs(n1.getX() - n2.getX()) < 1) {
+                  boolean n1Vertical = isVerticalNode.get(n1);
+                  boolean n2Vertical = isVerticalNode.get(n2);
+                  int heightDiff = (int)Math.round((n1.getY() - n2.getY()) / 30.0);
+                  
+                  if(n1.getY() > n2.getY()) {
+                     // Add downward connection
+                     n2.addConnection(n1);
+                     n2.addMovementType(t1_MovementType.DOWN);
+                     n2.addMovementTime(1);
+                     
+                     // Add upward connection if both are vertical nodes and within range
+                     if(n1Vertical && n2Vertical && Math.abs(heightDiff) <= 6) {
+                        n1.addConnection(n2);
+                        n1.addMovementType(t1_MovementType.UP);
+                        n1.addMovementTime(1);
+                     }
+                  } else {
+                     // Add downward connection
+                     n1.addConnection(n2);
+                     n1.addMovementType(t1_MovementType.DOWN);
+                     n1.addMovementTime(1);
+                     
+                     // Add upward connection if both are vertical nodes and within range
+                     if(n1Vertical && n2Vertical && Math.abs(heightDiff) <= 6) {
+                        n2.addConnection(n1);
+                        n2.addMovementType(t1_MovementType.UP);
+                        n2.addMovementTime(1);
+                     }
+                  }
+               }
+            }
+         }
+      }
+   }         public t1_Node getGoal()
       {
          return goal;
       }
