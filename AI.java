@@ -86,65 +86,95 @@ public class AI
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //code that runs before each tick goes here.
    public void runEachTick(Level.LevelIterator currentLevel, double px, double py, double xv, double yv, double jump, boolean isGrounded) {
-      theGraph.updateBreak(currentLevel);
-      
-      t1_Node whereIAm = theGraph.nodeAt(px, py);
-      t1_Node goalNode = theGraph.getGoal();
-      
-      if(whereIAm != null && goalNode != null) {
-         // Check if we need a new path
-         boolean needNewPath = (currentPath == null || 
-                              whereIAm != lastPosition || 
-                              goalNode != lastGoal);
-         
-         if(needNewPath) {
+    theGraph.updateBreak(currentLevel);
+    
+    t1_Node whereIAm = theGraph.nodeAt(px, py);
+    t1_Node goalNode = theGraph.getGoal();
+    
+    if(whereIAm != null && goalNode != null) {
+        // Check if we need a new path
+        boolean needNewPath = (currentPath == null || 
+                             whereIAm != lastPosition || 
+                             goalNode != lastGoal);
+        
+        if(needNewPath) {
             currentPath = theGraph.dijkstra(whereIAm, goalNode);
             lastPosition = whereIAm;
             lastGoal = goalNode;
-            // The path goes from goal to start, so we start at the last index
             currentPathIndex = currentPath.size() - 1;
-         }
-         
-         if(currentPath != null && currentPath.size() > 1) {
-            // Calculate which nodes we're moving between
+        }
+        
+        if(currentPath != null && currentPath.size() > 1) {
             t1_Node currentNode = currentPath.get(currentPathIndex);
             t1_Node targetNode = currentPath.get(currentPathIndex - 1);
             
             // Calculate distance to current target node
             double distanceToTarget = Math.sqrt(
-               Math.pow((px - targetNode.getX()), 2) + 
-               Math.pow((py - targetNode.getY()), 2)
+                Math.pow((px - targetNode.getX()), 2) + 
+                Math.pow((py - targetNode.getY()), 2)
             );
             
             // If we're close enough to current target, move to next node
             if(distanceToTarget < 40 && currentPathIndex > 1) {
-               currentPathIndex--;
-               targetNode = currentPath.get(currentPathIndex - 1);
+                currentPathIndex--;
+                targetNode = currentPath.get(currentPathIndex - 1);
             }
             
-            // Check if next node is above current node
+            // Check for edges around target node
+            double targetXOffset = 0;
+            
+            // Check for nodes to the left and right of target
+            boolean hasLeftNode = false;
+            boolean hasRightNode = false;
+            double checkDistance = 35; // Distance to check for adjacent nodes
+            
+            for(t1_Node node : theGraph.theNodes) {
+                if(node == targetNode) continue;
+                
+                // Check if node is at same Y level
+                if(Math.abs(node.getY() - targetNode.getY()) < 1) {
+                    // Check if node is to the left
+                    if(Math.abs(node.getX() - (targetNode.getX() - 30)) < checkDistance) {
+                        hasLeftNode = true;
+                    }
+                    // Check if node is to the right
+                    if(Math.abs(node.getX() - (targetNode.getX() + 30)) < checkDistance) {
+                        hasRightNode = true;
+                    }
+                }
+            }
+            
+            // Adjust target position based on edge detection
+            if(!hasLeftNode && !hasRightNode) {
+                // No adjustment if no adjacent nodes or both sides have nodes
+                targetXOffset = 0;
+            } else if(!hasLeftNode) {
+                // Move right if no left node
+                targetXOffset = 15;
+            } else if(!hasRightNode) {
+                // Move left if no right node
+                targetXOffset = -15;
+            }
+            
+            // Determine movement direction considering the offset
             boolean needToJump = targetNode.getY() < currentNode.getY();
+            double adjustedTargetX = targetNode.getX() + targetXOffset;
             
-            t1_MovementType way = currentNode.howGetTo(targetNode);
+            if(px < adjustedTargetX - 5) {
+                aDown = false;
+                dDown = true;
+            } else if(px > adjustedTargetX + 5) {
+                aDown = true;
+                dDown = false;
+            } else {
+                aDown = false;
+                dDown = false;
+            }
             
-            if(way == t1_MovementType.RIGHT) {
-               aDown = false;
-               dDown = true;
-               jumpDown = needToJump && isGrounded;          
-            }
-            else if(way == t1_MovementType.LEFT) {
-               aDown = true;
-               dDown = false;
-               jumpDown = needToJump && isGrounded;               
-            }
-            else {  // NONE movement type - vertical movement
-               aDown = false;
-               dDown = false;
-               jumpDown = needToJump && isGrounded;                 
-            }
-         }
-      }
-   }  
+            jumpDown = needToJump && isGrounded;
+        }
+    }
+}  
    ////NOTE: this method is called in the Main. It is one of the AI's hooks.
    //whatever you want to draw should be put here.
    public void drawAIInfo(GraphicsContext gc) {
@@ -203,125 +233,144 @@ public class AI
    //I did these are inner classes, but you don't have to do. 
    // you must put your team name + underscore (like P1_ as a prefix to whatever your classes are)
    public class t1_GraphB{
- 
+   
       ArrayList<t1_Node> theNodes = new ArrayList<t1_Node>();
       ArrayList<t1_Node> breakNodes = new ArrayList<t1_Node>();
       
       t1_Node goal;
    
       //creating the graph as we talked about in class.
-      public t1_GraphB(Level.LevelIterator graphToCreate)
-      {
-         HashMap<String,String> isThereATileThere = new HashMap<String,String>();
-      
-      
-         //this is soooo much nice than the previous code we did in class. Iterators are your friends :)
-         graphToCreate.resetIterator();
-         while(graphToCreate.hasNext())
-         {
-            Level.TileWrapper tw = graphToCreate.getNext();
-            isThereATileThere.put(tw.getX()+"_"+tw.getY(),"YES!");
-            
-            
-         }
+      public t1_GraphB(Level.LevelIterator graphToCreate) {
+    HashMap<String,String> isThereATileThere = new HashMap<String,String>();
+    
+    // First pass: mark all existing tiles
+    graphToCreate.resetIterator();
+    while(graphToCreate.hasNext()) {
+        Level.TileWrapper tw = graphToCreate.getNext();
+        isThereATileThere.put(tw.getX()+"_"+tw.getY(),"YES!");
+    }
 
-         graphToCreate.resetIterator();
-         while(graphToCreate.hasNext()) {
-            Level.TileWrapper tw = graphToCreate.getNext();
+    graphToCreate.resetIterator();
+    while(graphToCreate.hasNext()) {
+        Level.TileWrapper tw = graphToCreate.getNext();
+        
+        // Add node at tile level for special tiles
+        if(tw.getIsEnd() || tw.getIsStart()) {
+            theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30));
             
-            // Add node at tile level for special tiles
-            if(tw.getIsEnd() || tw.getIsStart()) {
-               theNodes.add(new t1_Node(tw.getX()*30, tw.getY()*30));
-               
-               if(tw.getIsEnd()) {
-                  goal = theNodes.get(theNodes.size()-1);
-               }
-               
-               if(tw.getIsBreak()) {
-                  breakNodes.add(theNodes.get(theNodes.size()-1));
-                  theNodes.get(theNodes.size()-1).setBreakMax(tw.getMaxBreakTimer());
-               } else {
-                  theNodes.get(theNodes.size()-1).setBreakAmount(-9);
-               }
-               continue;
+            if(tw.getIsEnd()) {
+                goal = theNodes.get(theNodes.size()-1);
             }
-         
-            // For each block, create nodes in a radius
-            for(int xOffset = -7; xOffset <= 7; xOffset++) {  // 7 blocks left and right
-               for(int height = 1; height <= 6; height++) {   // Up to 6 blocks up
-                  int checkX = tw.getX() + xOffset;
-                  int checkY = tw.getY() - height;  // Subtract for height since Y goes down
-                  
-                  // Skip if there's a block here
-                  if(isThereATileThere.get(checkX + "_" + checkY) != null) {
-                     continue;
-                  }
-                  
-                  // Skip if we already have a node here
-                  boolean nodeExists = false;
-                  for(t1_Node existing : theNodes) {
-                     if(existing.getX() == checkX*30 && existing.getY() == checkY*30) {
+            
+            if(tw.getIsBreak()) {
+                theNodes.get(theNodes.size()-1);
+            } else {
+                theNodes.get(theNodes.size()-1).setBreakAmount(-9);
+            }
+            continue;
+        }
+    
+        // For breakable tiles, create a single node in the middle of the tile
+        if(tw.getIsBreak()) {
+            t1_Node breakNode = new t1_Node(tw.getX()*30, tw.getY()*30 - 15);
+            breakNode.setBreakMax(tw.getMaxBreakTimer());
+            theNodes.add(breakNode);
+            breakNodes.add(breakNode);
+            continue;
+        }
+        
+        // Regular node generation - now generating more nodes above for downward connections
+        for(int xOffset = -7; xOffset <= 7; xOffset++) {
+            for(int height = 1; height <= 12; height++) {  // Increased to 12 to allow for downward connections
+                int checkX = tw.getX() + xOffset;
+                int checkY = tw.getY() - height;
+                
+                if(isThereATileThere.get(checkX + "_" + checkY) != null) {
+                    continue;
+                }
+                
+                boolean nodeExists = false;
+                for(t1_Node existing : theNodes) {
+                    if(existing.getX() == checkX*30 && existing.getY() == checkY*30) {
                         nodeExists = true;
                         break;
-                     }
-                  }
-                  
-                  if(!nodeExists) {
-                     theNodes.add(new t1_Node(checkX*30, checkY*30));
-                     if(tw.getIsBreak()) {
-                        t1_Node newNode = theNodes.get(theNodes.size()-1);
-                        breakNodes.add(newNode);
-                        newNode.setBreakMax(tw.getMaxBreakTimer());
-                     } else {
-                        theNodes.get(theNodes.size()-1).setBreakAmount(-9);
-                     }
-                  }
-               }
+                    }
+                }
+                
+                if(!nodeExists) {
+                    theNodes.add(new t1_Node(checkX*30, checkY*30));
+                    theNodes.get(theNodes.size()-1).setBreakAmount(-9);
+                }
             }
-         }
+        }
+    }
 
-         //N^2, could be better. Sort the nodes first by either x or y and just do the nodes that are nearby in the list.
-         for(int i=0;i<theNodes.size();i++)
-         {
-            for(int j=i+1;j<theNodes.size();j++)
-            {
-               if(i != j)
-               {
-                  t1_Node n1 = theNodes.get(i);
-                  t1_Node n2 = theNodes.get(j);
-               
-                  double d = Math.sqrt((n1.getX()-n2.getX())*(n1.getX()-n2.getX()) + (n1.getY()-n2.getY())*(n1.getY()-n2.getY()));
-               
-                  if(d < 35)
-                  {
-                     n1.addConnection(n2);
-                     n2.addConnection(n1);
+    // Create directional connections
+    for(int i=0; i<theNodes.size(); i++) {
+        for(int j=0; j<theNodes.size(); j++) {
+            if(i != j) {
+                t1_Node n1 = theNodes.get(i);
+                t1_Node n2 = theNodes.get(j);
+                
+                double distance = Math.sqrt((n1.getX()-n2.getX())*(n1.getX()-n2.getX()) + 
+                                         (n1.getY()-n2.getY())*(n1.getY()-n2.getY()));
+                
+                boolean isBreakTileNode1 = breakNodes.contains(n1);
+                boolean isBreakTileNode2 = breakNodes.contains(n2);
 
-                     n1.addMovementTime(1);
-                     n2.addMovementTime(2);
-                                          
-                     if(n1.getX() < n2.getX())
-                     {
-                        n1.addMovementType(t1_MovementType.RIGHT);
-                        n2.addMovementType(t1_MovementType.LEFT);
-                     }
-                     else if(n1.getY() < n2.getY())
-                     {
-                        n1.addMovementType(t1_MovementType.UP);
-                        n2.addMovementType(t1_MovementType.DOWN);
-                     }
-                     else
-                     {
-                        n1.addMovementType(t1_MovementType.LEFT);
-                        n2.addMovementType(t1_MovementType.RIGHT);                    
-                     }
-                  }
-               }
+                // Handle break node connections
+                if(isBreakTileNode1 || isBreakTileNode2) {
+                    if(Math.abs(n1.getX() - n2.getX()) < 1) {  // Same X coordinate
+                        // Allow movement down to break nodes from above
+                        if(isBreakTileNode2 && n1.getY() < n2.getY()) {
+                            n1.addConnection(n2);
+                            n1.addMovementType(t1_MovementType.DOWN);
+                            n1.addMovementTime(1);
+                        }
+                        else if(isBreakTileNode1 && n2.getY() < n1.getY()) {
+                            n2.addConnection(n1);
+                            n2.addMovementType(t1_MovementType.DOWN);
+                            n2.addMovementTime(1);
+                        }
+                    }
+                }
+                // Handle regular node connections
+                else if(distance < 35) {
+                    // Horizontal connections - both directions allowed
+                    if(Math.abs(n1.getY() - n2.getY()) < 1) {  // Same Y level
+                        if(n1.getX() < n2.getX()) {
+                            // Right connection
+                            n1.addConnection(n2);
+                            n1.addMovementType(t1_MovementType.RIGHT);
+                            n1.addMovementTime(1);
+                            
+                            // Left connection
+                            n2.addConnection(n1);
+                            n2.addMovementType(t1_MovementType.LEFT);
+                            n2.addMovementTime(1);
+                        }
+                    }
+                    // Vertical connections with directional rules based on height difference
+                    else if(Math.abs(n1.getX() - n2.getX()) < 1) {  // Same X coordinate
+                        int heightDiff = (int)Math.round((n1.getY() - n2.getY()) / 30.0);  // Convert pixel difference to tile height
+                        
+                        if(heightDiff > 0) {  // n1 is below n2
+                            if(heightDiff <= 6) {  // Within 6 tiles - create upward connection
+                                n1.addConnection(n2);
+                                n1.addMovementType(t1_MovementType.UP);
+                                n1.addMovementTime(1);
+                            } else {  // Beyond 6 tiles - create downward connection from upper node
+                                n2.addConnection(n1);
+                                n2.addMovementType(t1_MovementType.DOWN);
+                                n2.addMovementTime(1);
+                            }
+                        }
+                    }
+                }
             }
-         }
-     
-      }
-      
+        }
+    }
+}   
       public t1_Node getGoal()
       {
          return goal;
@@ -407,7 +456,7 @@ public class AI
       //takes in tilespace points
       public void clickPoint(int x, int y)
       {
-
+      
          //this is because the the nodes are the upper left coords and the x and y are the center.
          x-=15; 
          y-=15; 
@@ -415,10 +464,10 @@ public class AI
          for(int i=0;i<theNodes.size();i++)
          {
             t1_Node n1 = theNodes.get(i);
-
+         
             double d = Math.sqrt((n1.getX()-x)*(n1.getX()-x) + (n1.getY()-y)*(n1.getY()-y));
-
-
+         
+         
             //if distance is within 20 px of the clicked tile.  
             if(d < 20)
             {
@@ -453,66 +502,99 @@ public class AI
       int runCounter=0;
       
       public ArrayList<t1_Node> dijkstra(t1_Node start, t1_Node end)
-      {
-         //unweighted dijkstra
-         t1_Node current = start;
-         LinkedList<t1_Node> myQueue = new LinkedList<t1_Node>(); //use priority queue in weighted dijsktra
-         myQueue.addLast(current);
-         
-         int currentRun = runCounter++;
-         current.setLastUsed(runCounter);
-         
-         while(myQueue.size()>0 && current != end)
-         {
-            current = myQueue.getFirst(); //get and remove first element.
-            myQueue.removeFirst();
-            for(int i=0;i<current.getSize();i++)
-            {
-               t1_Node temp = current.get(i);
-               if(temp.getLastUsed() != runCounter)
-               {
-                  myQueue.addLast(temp);
-                  temp.setLastUsed(runCounter);
-                  temp.setBackPointer(current);
-                  //set distance in weighted dijkstra
-               }
-               else
-               {
-                  //have to check if the path distance is < current distance in weighted dijkstra
-               }
-            }
-         }
-         path.clear();
+{
+    if (start == null || end == null) {
+        return new ArrayList<>();
+    }
+    
+    // Track visited nodes and costs
+    HashSet<t1_Node> visited = new HashSet<>();
+    HashMap<t1_Node, Double> costs = new HashMap<>();
+    HashMap<t1_Node, Integer> upwardMoves = new HashMap<>();
+    
+    // Priority queue ordered by cost and number of upward moves
+    PriorityQueue<t1_Node> pq = new PriorityQueue<>((a, b) -> {
+        double costA = costs.getOrDefault(a, Double.MAX_VALUE);
+        double costB = costs.getOrDefault(b, Double.MAX_VALUE);
         
-         //trace back back in the graph. I put a little safety code in place.
-         current = end;
-         
-         if(end != null)
-         {
+        // First compare by number of upward moves (prefer fewer)
+        int upA = upwardMoves.getOrDefault(a, 0);
+        int upB = upwardMoves.getOrDefault(b, 0);
+        if (upA != upB) {
+            return Integer.compare(upA, upB);
+        }
+        
+        // Then compare by path cost
+        return Double.compare(costA, costB);
+    });
+    
+    // Initialize start node
+    costs.put(start, 0.0);
+    upwardMoves.put(start, 0);
+    pq.offer(start);
+    start.setLastUsed(runCounter);
+    int currentRun = runCounter++;
+    
+    while (!pq.isEmpty()) {
+        t1_Node current = pq.poll();
+        
+        if (current == end) {
+            break;
+        }
+        
+        if (visited.contains(current)) {
+            continue;
+        }
+        visited.add(current);
+        
+        // Process each neighbor
+        for (int i = 0; i < current.getSize(); i++) {
+            t1_Node neighbor = current.get(i);
+            if (visited.contains(neighbor)) {
+                continue;
+            }
             
-            while(current != start && current != null)    
-            {
-               path.add(current);
-               current = current.getBackPointer();
+            // Calculate new cost
+            double currentCost = costs.get(current);
+            double moveCost = current.timeToMove.get(i);
+            
+            // Add penalty for upward movement
+            int newUpwardMoves = upwardMoves.get(current);
+            if (current.howToMove.get(i) == t1_MovementType.UP) {
+                newUpwardMoves++;
             }
-            if(current != null)
-            {
-               path.add(current);
+            
+            double totalCost = currentCost + moveCost;
+            
+            // Update if this path is better
+            if (totalCost < costs.getOrDefault(neighbor, Double.MAX_VALUE)) {
+                costs.put(neighbor, totalCost);
+                upwardMoves.put(neighbor, newUpwardMoves);
+                neighbor.setLastUsed(currentRun);
+                neighbor.setBackPointer(current);
+                pq.offer(neighbor);
             }
-            else
-            {
-               //System.out.println("Current is null in AI.java");
-            }
-                 
-         }
-         else
-         {
-            //System.out.println("End is null in AI.java");
-         }
-         
-         return path;
+        }
+    }
+    
+    // Reconstruct path
+    path.clear();
+    t1_Node current = end;
+    
+    if (current.getLastUsed() == currentRun) {
+        while (current != start && current != null) {
+            path.add(current);
+            current = current.getBackPointer();
+        }
+        if (current != null) {
+            path.add(current);
+        }
+    }
+    
+    return path;
+}     
+      
       }
-   }
    
    public enum t1_MovementType {LEFT,RIGHT,NONE,UP,DOWN};
    
@@ -630,53 +712,72 @@ public class AI
          }
       }
    
-      public void draw(GraphicsContext gc)
-      {
-         //if(isClicked)
-         {
-            //draw all this nodes's connections. NOTE: my implementation doesn't remove connections from each node when a node breaks.
-            for(int i=0;i<connections.size();i++)
-            {
-               if(howToMove.get(i) == t1_MovementType.LEFT)
-               {
-                  gc.setStroke(Color.BLUE);
-               }
-               else if(howToMove.get(i) == t1_MovementType.UP)
-               {
-                  gc.setStroke(Color.GREEN);
-               }
-               else if(howToMove.get(i) == t1_MovementType.DOWN)
-               {
-                  gc.setStroke(Color.YELLOW);
-               }
-               else if (howToMove.get(i) == t1_MovementType.RIGHT)
-               {
-                  gc.setStroke(Color.RED);
-               }
-            
-               
-               gc.setLineWidth(3);
-               gc.strokeLine(x+8+7,y+8+7,connections.get(i).x+8+7,connections.get(i).y+8+7);
+    public void draw(GraphicsContext gc)
+{
+    // Draw all this node's connections
+    for(int i=0; i<connections.size(); i++)
+    {
+        t1_Node otherNode = connections.get(i);
+        
+        // Check if this connection is part of the current path
+        boolean isPathConnection = false;
+        if(AI.this.currentPath != null) {
+            for(int j = 0; j < AI.this.currentPath.size() - 1; j++) {
+                if((this == AI.this.currentPath.get(j) && otherNode == AI.this.currentPath.get(j+1)) ||
+                   (this == AI.this.currentPath.get(j+1) && otherNode == AI.this.currentPath.get(j))) {
+                    isPathConnection = true;
+                    break;
+                }
             }
-         }
-         
-         if(currentBreakAmount == -10)
-         { //-10 means not stepped on or not breakable. You can do getIsBreak() from the tw if you want.
-            gc.setFill(fillColor);
-         }
-         else if(currentBreakAmount == -9)
-         {
-            gc.setFill(fillColor); //someoen really wanted Cyan, don't remember who.
-         }
-         else
-         {
-            gc.setFill(Color.BLACK.interpolate(Color.WHITE,currentBreakAmount/maxBreakAmount)); //color based on break amount %
-         }
-         
-         gc.fillOval(x+8,y+8,14,14);
-      }
-      
-      t1_Node backPointer=null;
+        }
+        
+        if(isPathConnection) {
+            // Path connections are white
+            gc.setStroke(Color.WHITE);
+        } else {
+            // Normal color logic for non-path connections
+            if(howToMove.get(i) == t1_MovementType.UP) {
+                gc.setStroke(Color.BLUE);
+            }
+            else if(howToMove.get(i) == t1_MovementType.DOWN) {
+                gc.setStroke(Color.RED);
+            }
+            else if(howToMove.get(i) == t1_MovementType.RIGHT || 
+                    howToMove.get(i) == t1_MovementType.LEFT) {
+                gc.setStroke(Color.YELLOW);
+            }
+            
+            // Check if bidirectional
+            for(int j=0; j<otherNode.connections.size(); j++) {
+                if(otherNode.connections.get(j) == this) {
+                    if((howToMove.get(i) == t1_MovementType.UP && 
+                        otherNode.howToMove.get(j) == t1_MovementType.DOWN) ||
+                       (howToMove.get(i) == t1_MovementType.DOWN && 
+                        otherNode.howToMove.get(j) == t1_MovementType.UP)) {
+                        gc.setStroke(Color.PURPLE);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        gc.setLineWidth(3);
+        gc.strokeLine(x+8+7, y+8+7, connections.get(i).x+8+7, connections.get(i).y+8+7);
+    }
+    
+    // Draw the node itself
+    if(currentBreakAmount == -10) {
+        gc.setFill(fillColor);
+    }
+    else if(currentBreakAmount == -9) {
+        gc.setFill(fillColor);
+    }
+    else {
+        gc.setFill(Color.BLACK.interpolate(Color.WHITE, currentBreakAmount/maxBreakAmount));
+    }
+    
+    gc.fillOval(x+8, y+8, 14, 14);
+}         t1_Node backPointer=null;
       
       public void setBackPointer(t1_Node theThing)
       {
