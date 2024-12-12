@@ -316,7 +316,6 @@ ground 63 -7
 ground 63 -5
 ground 64 -7
 ground 64 -5
-goal 34 -15
 ground 60 -22
 ground 61 -22
 ground 62 -22
@@ -623,7 +622,6 @@ ground 37 -3
 ground 37 -2
 ground 37 -1
 ground 35 -5
-start 36 -6
 ground 36 -5
 ground 37 -9
 ground 37 -8
@@ -798,7 +796,7 @@ midair2 55 -12
 midair2 55 -11
 midair2 56 -14
 midair2 56 -13
-fakegoal 56 -12
+ground 56 -12
 midair2 56 -11
 midair2 57 -14
 midair2 57 -13

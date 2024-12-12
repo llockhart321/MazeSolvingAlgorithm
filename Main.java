@@ -741,7 +741,7 @@ public class Main extends Application {
       
       //find player's start on the map
       out:
-      for (Chunk value : myLevel.getMap().values()) 
+      for (Chunk value : myLevel.getMap().values())
       {
          
       
