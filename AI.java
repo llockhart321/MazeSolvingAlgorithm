@@ -160,17 +160,22 @@ public class AI
             boolean needToJump = targetNode.getY() < currentNode.getY();
             double adjustedTargetX = targetNode.getX() + targetXOffset;
             
-            if(px < adjustedTargetX - 5) {
+            // Expanded movement threshold to allow for smoother movement
+            if(px < adjustedTargetX - 2) {  // Reduced threshold from 5 to 2
                 aDown = false;
                 dDown = true;
-            } else if(px > adjustedTargetX + 5) {
+            } else if(px > adjustedTargetX + 2) {  // Reduced threshold from 5 to 2
                 aDown = true;
                 dDown = false;
             } else {
-                aDown = false;
-                dDown = false;
+                // Only stop horizontal movement if very close to target
+                if(Math.abs(px - adjustedTargetX) < 2) {
+                    aDown = false;
+                    dDown = false;
+                }
             }
             
+            // Always try to jump if we need to go up and we're grounded
             jumpDown = needToJump && isGrounded;
         }
     }
@@ -323,7 +328,7 @@ public class AI
         for(int xOffset = -7; xOffset <= 7; xOffset++) {
             if(xOffset >= -1 && xOffset <= 1) continue;
             
-            for(int height = 1; height <= 2; height++) {
+            for(int height = 1; height <= 6; height++) {
                 int checkX = tw.getX() + xOffset;
                 int checkY = tw.getY() - height;
                 
