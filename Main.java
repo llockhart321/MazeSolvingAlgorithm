@@ -71,6 +71,8 @@ public class Main extends Application {
     ArrayList<Player> thePlayers = new ArrayList<Player>();
     Player thePlayer = null;
     private static boolean LOCK = false;
+    private boolean isPaused = false;
+    
     public static boolean isLocked()
     {
       return LOCK;
@@ -166,11 +168,8 @@ public class Main extends Application {
                int  x = scan.nextInt();
                int y = scan.nextInt();
             
-               
-            
                for(int i=0;i<tileTemplates.size();i++)
                {
-                  //System.out.println(name+" "+);
                   if(name.equals(tileTemplates.get(i).getName()))
                   {
                      myLevel.addTile(new Tile(tileTemplates.get(i), x,y));  
@@ -183,24 +182,6 @@ public class Main extends Application {
         {
             e.printStackTrace();
         }
-        
-        
-        //origianl testing code to verify it could handle 10k tiles. It was nice fire-y diagonsals.
-        
-        /*myLevel.addTile(new Tile(new Color(1,0,0,1), new Color(.5,.5,.5,1), 0,0));
-        myLevel.addTile(new Tile(new Color(1,1,0,1), new Color(0,0,0,1), 1,0));
-        myLevel.addTile(new Tile(new Color(1,0,0,1), new Color(.5,.5,.5,1), 0,1));
-        myLevel.addTile(new Tile(new Color(1,1,0,1), new Color(0,0,0,1), 1,1)); */    
-        
-        /*for(int i=0;i<100;i++)
-        {
-            for(int j=0;j<100;j++)
-            {
-               float key = ((i+j)%20)*.05f;
-            
-               myLevel.addTile(new Tile(new Color(1,key,0,1), new Color(0,0,0,1), i,j, "test", "test.png"));  
-            } 
-        }*/
          
         // Set up the scene
         Scene scene = new Scene(root, 800, 450);
@@ -217,11 +198,10 @@ public class Main extends Application {
         // Show the window
         primaryStage.show();
         
+        AnimationHandler ah = new AnimationHandler();
+        ah.start();
          
-         AnimationHandler ah = new AnimationHandler();
-         ah.start();
-         
-         theCanvas.requestFocus();
+        theCanvas.requestFocus();
     }
 
    boolean left_b = false;
@@ -230,65 +210,59 @@ public class Main extends Application {
    boolean down_b = false;
    boolean jump = false;
    
-   
- //keep track of what keys are pressed
- private void handleKeyPress(KeyEvent event) 
- {
-     switch (event.getCode()) 
-     {
-         case A:
-            left_b = true;
-             break;
-         case D:
-            right_b = true;
-             break;
-         case W:
-            up_b = true;
-             break;
-         case S:
-            down_b = true;
-             break;
-             
-         case G:
-            if(thePlayer != null) thePlayer.setDownA(true);
-             break;
-         case J:
-            if(thePlayer != null) thePlayer.setDownD(true);
-             break;
-         case SPACE:
-            jump = true;
-            if(thePlayer != null) thePlayer.setDownJump(true);
-            break;
-      }
-      //System.out.println("keypress");
+   private void handleKeyPress(KeyEvent event) 
+   {
+       switch (event.getCode()) 
+       {
+           case A:
+              left_b = true;
+               break;
+           case D:
+              right_b = true;
+               break;
+           case W:
+              up_b = true;
+               break;
+           case S:
+              down_b = true;
+               break;
+               
+           case G:
+              if(thePlayer != null) thePlayer.setDownA(true);
+               break;
+           case J:
+              if(thePlayer != null) thePlayer.setDownD(true);
+               break;
+           case SPACE:
+              jump = true;
+              if(thePlayer != null) thePlayer.setDownJump(true);
+              break;
+        }
    }
    
-   
- //keep track of what keys are released
- private void handleKeyRelease(KeyEvent event) 
- {
-     switch (event.getCode()) 
-     {
-         case A:
-            left_b = false;
-             break;
-         case D:
-            right_b = false;
-             break;
-         case W:
-            up_b = false;
-             break;
-         case S:
-            down_b = false;
-             break;
-         case G:
-            if(thePlayer != null) thePlayer.setDownA(false);
-             break;
-         case J:
-            if(thePlayer != null) thePlayer.setDownD(false);
-             break;
-      }
-      //System.out.println("keyrelease");
+   private void handleKeyRelease(KeyEvent event) 
+   {
+       switch (event.getCode()) 
+       {
+           case A:
+              left_b = false;
+               break;
+           case D:
+              right_b = false;
+               break;
+           case W:
+              up_b = false;
+               break;
+           case S:
+              down_b = false;
+               break;
+           case G:
+              if(thePlayer != null) thePlayer.setDownA(false);
+               break;
+           case J:
+              if(thePlayer != null) thePlayer.setDownD(false);
+               break;
+        }
    }
 
    float scrollx=0;
@@ -298,40 +272,29 @@ public class Main extends Application {
    
    long lastTime;
    
-    private static long startTime = System.nanoTime();
-    private static int callCount = 0;
+   private static long startTime = System.nanoTime();
+   private static int callCount = 0;
 
-
-   //counts times a method is called each second. GPT
-    public static void trackMethodCall() {
-        callCount++;  // Increment the counter whenever the method is called
-        
-        // Calculate elapsed time in seconds
-        long elapsedTime = System.nanoTime() - startTime;
-        if (elapsedTime >= 1_000_000_000) {  // 1 second = 1 billion nanoseconds
-            // Output the count and reset everything
-            System.out.println("Method was called " + callCount + " times in 1 second.");
-            callCount = 0;
-            startTime = System.nanoTime();  // Reset the timer
-        }
-    }
+   public static void trackMethodCall() {
+       callCount++;
+       long elapsedTime = System.nanoTime() - startTime;
+       if (elapsedTime >= 1_000_000_000) {
+           System.out.println("Method was called " + callCount + " times in 1 second.");
+           callCount = 0;
+           startTime = System.nanoTime();
+       }
+   }
 
    int leftover=0;
    
-   
-
-   //called 60 times a second
    public class AnimationHandler extends AnimationTimer
    {
       public void handle(long currentTimeInNanoSeconds)
       {
-         //trackMethodCall();
-         
-         double  timeElapsed = .001f;
+         double timeElapsed = .001f;
          if(lastTime != 0)
          {
             timeElapsed = (currentTimeInNanoSeconds - lastTime)*.000000001;
-            //System.out.println(timeElapsed);
             lastTime = currentTimeInNanoSeconds;
          }
          else
@@ -340,33 +303,21 @@ public class Main extends Application {
          }
 
          GraphicsContext gc = theCanvas.getGraphicsContext2D();
-         
             
          gc.setFill(Color.BLACK);
          gc.fillRect(0,0,800,450);
             
-            
-         //calc the scroll of the editor   
          scrollx+=((left_b ? -1 : 0) + (right_b ? 1 : 0 ))*scrollspeed;
          scrolly+=((up_b ? -1 : 0) + (down_b ? 1 : 0 ))*scrollspeed;
         
-        
-        //what to do to draw the editor
          if(state == GameState.EDITOR)
          {
-
-      
-            //save the current translation matrix.
             gc.save();
             
-            //translates the drawing so it calculates what should be on the screen.
             gc.translate(-scrollx,-scrolly);
 
-      
-            //draw the current blocks
             myLevel.drawAtPosition((int) scrollx/30,(int)scrolly/30, gc);
             
-            //draw the grid
             int initialX = (int) scrollx/30;
             int initialY = (int) scrolly/30;
             
@@ -388,11 +339,9 @@ public class Main extends Application {
             
             if(overGameGrid)
             {
-               //draw where mouse is
                int squarex = ((int)(mx+scrollx))/30;
                int squarey = ((int)(my+scrolly))/30;
                
-               //deal with neg x/y
                if(mx+scrollx < 0)
                {
                   squarex = (int)Math.floor((mx+scrollx)/30);
@@ -408,8 +357,6 @@ public class Main extends Application {
                gc.strokeRect(squarex*30,squarey*30,31,31);
             }
             
-            
-            //remove the translate change. So that the next calls are drawn at absolute positions
             gc.restore();       
             
             gc.setStroke(Color.BLACK);
@@ -420,9 +367,11 @@ public class Main extends Application {
             gc.strokeRect(350,0,100,40);
             gc.strokeRect(720,95,80,260);
                         
-            //play / save buttons
+            //play / save / pause buttons
             gc.setFill(Color.RED);
             gc.fillRect(360,5,30,30);
+            gc.setFill(Color.GREEN);
+            gc.fillRect(385,5,30,30);
             gc.setFill(Color.BLUE);
             gc.fillRect(410,5,30,30);
                         
@@ -431,7 +380,6 @@ public class Main extends Application {
             gc.fillRect(725,315,30,30);
             gc.fillRect(765,315,30,30);
             
-            //tiles and highlights on the side
             for(int i=0;i<10;i++)
             {
                int tx = i%2*40;
@@ -460,35 +408,31 @@ public class Main extends Application {
          }
          else if(state == GameState.GAME)
          {
-            //state pattern would be cleaner
+            if(!isPaused) {
+                leftover+=(int)(timeElapsed*100000);      
+                int whole = leftover/1000;
+                leftover = leftover%1000;
+          
+                for(int i=0;i<whole;i++)
+                {
+                    for(int j=0;j<thePlayers.size();j++)
+                    {
+                        playerLevels.get(j).runTiles(thePlayers, .01);
+                     
+                        thePlayers.get(j).move(playerLevels.get(j), thePlayers.get(j), theMain);
                         
-            //update the physics in 10ms increments
-            leftover+=(int)(timeElapsed*100000);      
-            int whole = leftover/1000;
-            leftover = leftover%1000;
-      
-            for(int i=0;i<whole;i++)
-            {
-               
-               
-               for(int j=0;j<thePlayers.size();j++)
-               {
-                  playerLevels.get(j).runTiles(thePlayers, .01);
-               
-                  thePlayers.get(j).move(playerLevels.get(j), thePlayers.get(j), theMain);
-                  
-                  if(thePlayers.get(j).getAtGoal())
-                  {
-                     System.out.println(thePlayers.get(j).getName()+" reached goal in "+thePlayers.get(j).getTime()+" ticks.");
-                     thePlayers.remove(j);
-                     if(thePlayers.size() != 0) //don't remove last level so there is a level to draw always
-                        playerLevels.remove(j);
-                     j--;
-                  }
-               }
+                        if(thePlayers.get(j).getAtGoal())
+                        {
+                           System.out.println(thePlayers.get(j).getName()+" reached goal in "+thePlayers.get(j).getTime()+" ticks.");
+                           thePlayers.remove(j);
+                           if(thePlayers.size() != 0)
+                              playerLevels.remove(j);
+                           j--;
+                        }
+                    }
+                }
             }
             
-            //undo the matrix translate.
             gc.save();
             
             if(thePlayers.size() != 0)
@@ -497,30 +441,37 @@ public class Main extends Application {
                gc.fillText("Displaying level of player: "+thePlayers.get(0).getName(),0,20);
             }
             
-            //gc.translate(-thePlayer.getX() + 400,-thePlayer.getY() + 225);
             gc.translate(-scrollx,-scrolly);
 
-            //draw the current blocks
-            //runningLevel.drawAtPosition((int) thePlayer.getX()/30,(int)thePlayer.getY()/30, gc);
-            
-            //draw player 0 level
-            playerLevels.get(0).drawAtPosition((int) scrollx/30,(int)scrolly/30, gc);
-            
-            
+            if (playerLevels.size() > 0) {
+                playerLevels.get(0).drawAtPosition((int) scrollx/30,(int)scrolly/30, gc);
+            }
             
             for(int i=0;i<thePlayers.size();i++)
             {
                thePlayers.get(i).drawMe(gc);
             }
             
-            //draw the graph on the screen. I'm assuming you want me to leave this in...
-
-            
-            
             gc.restore();  
+            
+            // Draw buttons
             gc.setFill(Color.RED);
             gc.fillRect(360,5,30,30);
+            gc.setFill(Color.GREEN);
+            gc.fillRect(385,5,30,30);
             
+            // Draw pause/play icon
+            gc.setFill(Color.WHITE);
+            if(isPaused) {
+                // Draw play triangle
+                double[] xPoints = {390, 390, 405};
+                double[] yPoints = {10, 30, 20};
+                gc.fillPolygon(xPoints, yPoints, 3);
+            } else {
+                // Draw pause bars
+                gc.fillRect(392, 10, 6, 20);
+                gc.fillRect(402, 10, 6, 20);
+            }
          }
       }
       
@@ -534,7 +485,6 @@ public class Main extends Application {
         launch(args);
     }
     
-    //writing the tile data
     public void save()
     {
       String fname = "tiles.txt";
@@ -543,20 +493,15 @@ public class Main extends Application {
       {
             PrintWriter writer = new PrintWriter(fname);
             
-            // Use the PrintWriter to write lines of text to the file
             for(int i=0;i<tileTemplates.size();i++)
             {
                tileTemplates.get(i).write(writer);
-            
-
             }
             
             writer.println("tileplacements");
             
             for (Chunk value : myLevel.getMap().values()) 
             {
-               
-            
                for(int i=0;i<5;i++)
                {
                   for(int j=0;j<5;j++)
@@ -568,10 +513,8 @@ public class Main extends Application {
                      }
                   }
                }
-               //System.out.println("Value: " + value);
             }
 
-            // Close the PrintWriter (this also flushes the stream)
             writer.close();
       }
       catch(Exception e)
@@ -580,24 +523,19 @@ public class Main extends Application {
       }
     }
     
-    //current state of the game.
     public enum GameState {EDITOR, GAME};
     
     public static GameState state;
     
-    //current mouse position
     float mx, my;
     
     boolean overGameGrid = false;
     
-    //which tiletype selected / hovered above.
     int tileSelected = -1;
     int tileHover = -1;
     
-    //for scrolling the pages
     int editorpage=0;
     
-   //keep track of where the mouse is if you move the mouse
    public class MouseMovedListener implements EventHandler<MouseEvent>  
    {
       public void handle(MouseEvent me)
@@ -617,16 +555,12 @@ public class Main extends Application {
       }
    }
    
-   
-   //handle what to do if the mouse is pressed
    public class MousePressedListener implements EventHandler<MouseEvent>  
    {
       public void handle(MouseEvent me)
       {
          if(overGameGrid && state == GameState.EDITOR && tileSelected != -1)
          {
-               
-         
             int squarex = ((int)(mx+scrollx))/30;
             int squarey = ((int)(my+scrolly))/30;
             
@@ -640,8 +574,6 @@ public class Main extends Application {
                squarey = (int)Math.floor((my+scrolly)/30);
             }     
          
-            //System.out.println("copying: "+tileSelected);
-            
             if(tileTemplates.get(tileSelected).getName().equals("erase"))
             {
                myLevel.removeTile(squarex, squarey);
@@ -650,8 +582,6 @@ public class Main extends Application {
             {
                myLevel.addTile(new Tile(tileTemplates.get(tileSelected),squarex, squarey));
             }
-         
-            
          }
          else if (state == GameState.EDITOR)
          {
@@ -671,9 +601,6 @@ public class Main extends Application {
                }
             }
             
-            //gc.fillRect(725,315,30,30);
-            //gc.fillRect(765,315,30,30);
-            //up buttons
             if(InGameButton.pointInsideOfStatic((int)mx,(int)my,725,315,30,30))
             {
                editorpage--;
@@ -683,7 +610,6 @@ public class Main extends Application {
                }
             }
             
-            //down buttons
             if(InGameButton.pointInsideOfStatic((int)mx,(int)my,765,315,30,30))
             {
                editorpage++;
@@ -693,16 +619,11 @@ public class Main extends Application {
                }
             }
             
-            //gc.fillRect(410,5,30,30);
-            //save button
             if(InGameButton.pointInsideOfStatic((int)mx,(int)my,410,5,30,30))
             {
                save();
             }
             
-            
-            //play button
-            //gc.fillRect(360,5,30,30);
             if(InGameButton.pointInsideOfStatic((int)mx,(int)my,360,5,30,30))
             {
                play();
@@ -714,8 +635,12 @@ public class Main extends Application {
             {
                stopPlay();
             }
+            else if(InGameButton.pointInsideOfStatic((int)mx,(int)my,385,5,30,30))
+            {
+               isPaused = !isPaused;
+            }
             
-            if(thePlayers.size() != 0)
+            if(thePlayers.size() != 0 && !isPaused)
             {
                for(int i=0;i<thePlayers.size();i++)
                {
@@ -726,25 +651,17 @@ public class Main extends Application {
       }
    }
 
-   //each player has their own copy of the level. 
    ArrayList<Level> playerLevels = new ArrayList<Level>();
    
    public void play()
    {
-      //runningLevel = new Level(myLevel);
-      
-
-      
       state = GameState.GAME;
       
       int playerx=-999999,playery=-999999;
       
-      //find player's start on the map
       out:
       for (Chunk value : myLevel.getMap().values())
       {
-         
-      
          for(int i=0;i<5;i++)
          {
             for(int j=0;j<5;j++)
@@ -768,31 +685,29 @@ public class Main extends Application {
          return;
       }
       
-      
       thePlayers.clear();
       thePlayers.add(new AIPlayer(playerx*30,playery*30, new AI()));
       thePlayers.add(thePlayer = new Player(playerx*30,playery*30));
    
       playerLevels.clear();
    
-      //populate levels after you create the players. Otherwise don't know how many to make
       for(int i=0;i<thePlayers.size();i++)
       {
          playerLevels.add(new Level(myLevel));
       }
    
-      //call the start method on the AI's
       for(int i=0;i<thePlayers.size();i++)
       {
          LOCK=true;
          ((Player)thePlayers.get(i)).start(playerLevels.get(i),thePlayers.get(i));
          LOCK=false;
       }
+
+      isPaused = false;
    }
    
    public void stopPlay()
    {
       state = GameState.EDITOR;
    }
-   
 }

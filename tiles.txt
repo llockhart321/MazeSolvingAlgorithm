@@ -91,18 +91,17 @@ ground 54 16
 ground 54 17
 ground 54 18
 ground 54 19
-start 53 14
 ground 54 10
 ground 54 11
 ground 54 12
 ground 54 13
 ground 54 14
+fakegoal 53 5
 ground 54 5
 ground 54 6
 ground 54 7
 ground 54 8
 ground 54 9
-goal 52 4
 ground 54 0
 ground 54 1
 ground 54 2
@@ -130,6 +129,7 @@ ground 54 -4
 ground 54 -3
 ground 54 -2
 ground 54 -1
+fakegoal 52 -15
 ground 53 -19
 ground 53 -18
 ground 53 -17
@@ -307,6 +307,7 @@ ground 33 -20
 ground 34 -20
 ground 64 -2
 ground 64 -1
+fakegoal 34 -17
 ground 60 -5
 ground 61 -9
 ground 61 -8
@@ -360,7 +361,6 @@ ground 31 -5
 ground 32 -5
 ground 33 -5
 ground 34 -5
-midair 7 -25
 ground 5 -20
 ground 6 -20
 ground 7 -20
@@ -385,6 +385,7 @@ ground 8 -5
 ground 9 -5
 midair2 10 9
 midair2 11 9
+fakegoal 10 10
 ground 10 11
 midair2 11 10
 ground 11 11
@@ -476,8 +477,6 @@ ground 47 -20
 ground 48 -20
 ground 49 -20
 ground 45 -14
-ground 46 -14
-ground 47 -14
 ground 48 -14
 ground 49 -14
 ground 60 25
@@ -493,6 +492,7 @@ ground 62 6
 ground 63 6
 ground 64 6
 ground 60 3
+fakegoal 61 1
 ground 61 3
 ground 62 3
 ground 63 3
@@ -521,7 +521,7 @@ ground 73 -4
 ground 73 -3
 ground 73 -2
 ground 73 -1
-midair 23 -25
+fakegoal 21 -3
 ground 22 -4
 ground 22 -3
 ground 22 -2
@@ -551,6 +551,7 @@ ground 9 11
 ground 25 2
 ground 26 2
 ground 27 2
+ground 28 2
 ground 25 6
 ground 26 6
 ground 26 9
@@ -563,6 +564,7 @@ ground 26 10
 ground 26 11
 ground 27 10
 ground 27 11
+fakegoal 28 10
 ground 28 11
 ground 29 11
 ground 35 -20
@@ -646,6 +648,7 @@ ground 57 13
 ground 55 6
 ground 56 6
 ground 57 6
+fakegoal 57 8
 ground 58 6
 ground 59 6
 ground 57 0
@@ -798,7 +801,7 @@ midair2 55 -12
 midair2 55 -11
 midair2 56 -14
 midair2 56 -13
-ground 56 -12
+fakegoal 56 -12
 midair2 56 -11
 midair2 57 -14
 midair2 57 -13
