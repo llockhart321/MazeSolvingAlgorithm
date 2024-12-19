@@ -337,10 +337,10 @@ public class AI
          
                 // Handle horizontal movement
             if(!reachedMovementLimit) {
-               if(px < targetNode.getX() - 2) {
+               if(px < targetNode.getX()) {
                   aDown = false;
                   dDown = true;
-               } else if(px > targetNode.getX() + 2) {
+               } else if(px > targetNode.getX()) {
                   aDown = true;
                   dDown = false;
                } else {
