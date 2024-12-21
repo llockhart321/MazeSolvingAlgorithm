@@ -602,6 +602,21 @@ public class AI
             gc.setFill(Color.WHITE);
          }*/
       
+      for(int i=0;i<theNodes.size();i++)
+         {
+            t1_Node node = theNodes.get(i);
+            
+            for(int j=0;j<breakNodes.size();j++)
+            {
+               t1_Node breakNode = breakNodes.get(j);
+               
+               if(node.getX() == breakNode.getX() && node.getY() == breakNode.getY())
+               {
+                  theNodes.remove(i);
+               }
+            }
+         }
+      
       // Create connections
          for(int i=0; i<theNodes.size(); i++) {
             for(int j=0; j<theNodes.size(); j++) {
@@ -739,6 +754,29 @@ public class AI
          for(int i=0;i<theNodes.size();i++)
          {
             theNodes.get(i).draw(gc);
+         }
+         
+         // Debugging: Check for overlapping regular and break nodes
+         for(int i=0;i<theNodes.size();i++)
+         {
+            t1_Node node = theNodes.get(i);
+            
+            for(int j=0;j<breakNodes.size();j++)
+            {
+               t1_Node breakNode = breakNodes.get(j);
+               
+               if(node.getX() == breakNode.getX() && node.getY() == breakNode.getY())
+               {
+                  // Highlight overlapping nodes with a red rectangle
+                  gc.setStroke(Color.RED);
+                  gc.setLineWidth(2);
+                  gc.strokeRect(node.getX()-5, node.getY()-5, 40, 40);
+                  
+                  // Print debug message
+                  System.out.println("Debug: Regular node " + node.getName() + 
+                        " overlaps with break node " + breakNode.getName());
+               }
+            }
          }
       }
       
