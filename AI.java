@@ -463,20 +463,34 @@ public class AI
          
          // Handle break tiles
             if(tw.getIsBreak()) {
-               t1_Node breakNode = new t1_Node(tw.getX()*30, (tw.getY()+1)*30);
-               breakNode.setBreakMax(tw.getMaxBreakTimer());
-               theNodes.add(breakNode);
-               breakNodes.add(breakNode);
-               isVerticalNode.put(breakNode, true);
+                t1_Node breakNode = new t1_Node(tw.getX()*30, tw.getY()*30); // Remove the +1 to place at correct height
+                breakNode.setBreakMax(tw.getMaxBreakTimer());
+                theNodes.add(breakNode);
+                breakNodes.add(breakNode);
+                isVerticalNode.put(breakNode, true);
             
-            // Create node directly above break tile
-               t1_Node nodeAboveBreak = new t1_Node(tw.getX()*30, (tw.getY())*30);
-               theNodes.add(nodeAboveBreak);
-               isVerticalNode.put(nodeAboveBreak, true);
-               isDirectlyAboveBreak.put(nodeAboveBreak, true);
-               continue;
+                // Create node directly above break tile
+                t1_Node nodeAboveBreak = new t1_Node(tw.getX()*30, (tw.getY()-1)*30);
+                theNodes.add(nodeAboveBreak);
+                isVerticalNode.put(nodeAboveBreak, true);
+                isDirectlyAboveBreak.put(nodeAboveBreak, true);
+                continue;
             }
+           
+           boolean isPositionOccupiedByBreakNode = false;
+           for(int i=0; i<theNodes.size(); i++)
+           {
+               for(t1_Node breakNode : breakNodes) {
+                if(theNodes.get(i).getX()*30 == breakNode.getX() && theNodes.get(i).getY()*30 == breakNode.getY()) {
+                    isPositionOccupiedByBreakNode = true;
+                    break;
+                }
+            }
+           }
             
+            if(isPositionOccupiedByBreakNode) {
+                continue;
+            } 
          
          // Generate vertical nodes with improved placement
             for(int xOffset = -1; xOffset <= 1; xOffset++) {
@@ -602,7 +616,7 @@ public class AI
             gc.setFill(Color.WHITE);
          }*/
       
-      for(int i=0;i<theNodes.size();i++)
+      /*for(int i=0;i<theNodes.size();i++)
          {
             t1_Node node = theNodes.get(i);
             
@@ -615,7 +629,14 @@ public class AI
                   theNodes.remove(i);
                }
             }
-         }
+         }*/
+         //breakNodes.clear();
+         //t1_Node node = new t1_Node(500, 500);
+         //breakNodes.add(node);
+         /*for(int i=0;i<theNodes.size();i++)
+         {
+            theNodes.remove(i);
+         }*/
       
       // Create connections
          for(int i=0; i<theNodes.size(); i++) {
@@ -796,31 +817,23 @@ public class AI
          theNode.destroy();
       }
       
-      public void updateBreak(Level.LevelIterator currentLevel)
-      {
-         //loop over all break nodes
-         for(int i=0;i<breakNodes.size();i++)
-         {
-            //might have been better to leave the nodes in tileSpace.
-            //I had to figure out what was wrong with my math. 
-            //System.out.println(breakNodes.get(i).getX()/30+" "+(breakNodes.get(i).getY()+30)/30);
-            
-            //get a particular breakNode's tile wrapper.
-            Level.TileWrapper tw = currentLevel.getSpecificTile(breakNodes.get(i).getX()/30,(breakNodes.get(i).getY()+30)/30);
-            
-            if(tw == null) //so the node no longer exsits. this means it broke.
-            {
-               removeNodeFromGraph(breakNodes.get(i));
-               breakNodes.remove(i);
-               i--;
-            }
-            else //otherwise update the timer.
-            {
-               breakNodes.get(i).setBreakAmount(tw.getBreakTimer());
-            }
-         }
-      }
-      
+      public void updateBreak(Level.LevelIterator currentLevel) {
+    for(int i=0; i<breakNodes.size(); i++) {
+        // Remove the +30 offset since nodes are now placed at correct height
+        Level.TileWrapper tw = currentLevel.getSpecificTile(
+            breakNodes.get(i).getX()/30,
+            breakNodes.get(i).getY()/30
+        );
+        
+        if(tw == null) {
+            removeNodeFromGraph(breakNodes.get(i));
+            breakNodes.remove(i);
+            i--;
+        } else {
+            breakNodes.get(i).setBreakAmount(tw.getBreakTimer());
+        }
+    }
+}      
       
       
       //takes in tilespace points
