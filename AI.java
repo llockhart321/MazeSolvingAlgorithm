@@ -424,7 +424,7 @@ public class AI
       ArrayList<t1_Node> breakNodes = new ArrayList<t1_Node>();
       
       t1_Node goal;
-      
+   
       //creating the graph as we talked about in class.
       public t1_GraphB(Level.LevelIterator graphToCreate) {
          HashMap<String,String> isThereATileThere = new HashMap<String,String>();
@@ -463,34 +463,19 @@ public class AI
          
          // Handle break tiles
             if(tw.getIsBreak()) {
-                t1_Node breakNode = new t1_Node(tw.getX()*30, tw.getY()*30); // Remove the +1 to place at correct height
-                breakNode.setBreakMax(tw.getMaxBreakTimer());
-                theNodes.add(breakNode);
-                breakNodes.add(breakNode);
-                isVerticalNode.put(breakNode, true);
+               t1_Node breakNode = new t1_Node(tw.getX()*30, (tw.getY()+1)*30);
+               breakNode.setBreakMax(tw.getMaxBreakTimer());
+               theNodes.add(breakNode);
+               breakNodes.add(breakNode);
+               isVerticalNode.put(breakNode, true);
             
-                // Create node directly above break tile
-                t1_Node nodeAboveBreak = new t1_Node(tw.getX()*30, (tw.getY()-1)*30);
-                theNodes.add(nodeAboveBreak);
-                isVerticalNode.put(nodeAboveBreak, true);
-                isDirectlyAboveBreak.put(nodeAboveBreak, true);
-                continue;
+            // Create node directly above break tile
+               t1_Node nodeAboveBreak = new t1_Node(tw.getX()*30, (tw.getY())*30);
+               theNodes.add(nodeAboveBreak);
+               isVerticalNode.put(nodeAboveBreak, true);
+               isDirectlyAboveBreak.put(nodeAboveBreak, true);
+               continue;
             }
-           
-           boolean isPositionOccupiedByBreakNode = false;
-           for(int i=0; i<theNodes.size(); i++)
-           {
-               for(t1_Node breakNode : breakNodes) {
-                if(theNodes.get(i).getX()*30 == breakNode.getX() && theNodes.get(i).getY()*30 == breakNode.getY()) {
-                    isPositionOccupiedByBreakNode = true;
-                    break;
-                }
-            }
-           }
-            
-            if(isPositionOccupiedByBreakNode) {
-                continue;
-            } 
          
          // Generate vertical nodes with improved placement
             for(int xOffset = -1; xOffset <= 1; xOffset++) {
@@ -600,43 +585,6 @@ public class AI
                }
             }
          }
-         
-         // Check if there's another node at the same position
-         /*boolean hasOverlappingNode = false;
-         for(t1_Node otherNode : theGraph.theNodes) {
-            if(otherNode != this && otherNode.x == this.x && otherNode.y == this.y) {
-               hasOverlappingNode = true;
-               break;
-            }
-         }
-      
-         // Draw the node itself
-         if(hasOverlappingNode){
-            // If there's an overlapping node, color it white
-            gc.setFill(Color.WHITE);
-         }*/
-      
-      /*for(int i=0;i<theNodes.size();i++)
-         {
-            t1_Node node = theNodes.get(i);
-            
-            for(int j=0;j<breakNodes.size();j++)
-            {
-               t1_Node breakNode = breakNodes.get(j);
-               
-               if(node.getX() == breakNode.getX() && node.getY() == breakNode.getY())
-               {
-                  theNodes.remove(i);
-               }
-            }
-         }*/
-         //breakNodes.clear();
-         //t1_Node node = new t1_Node(500, 500);
-         //breakNodes.add(node);
-         /*for(int i=0;i<theNodes.size();i++)
-         {
-            theNodes.remove(i);
-         }*/
       
       // Create connections
          for(int i=0; i<theNodes.size(); i++) {
@@ -776,29 +724,6 @@ public class AI
          {
             theNodes.get(i).draw(gc);
          }
-         
-         // Debugging: Check for overlapping regular and break nodes
-         for(int i=0;i<theNodes.size();i++)
-         {
-            t1_Node node = theNodes.get(i);
-            
-            for(int j=0;j<breakNodes.size();j++)
-            {
-               t1_Node breakNode = breakNodes.get(j);
-               
-               if(node.getX() == breakNode.getX() && node.getY() == breakNode.getY())
-               {
-                  // Highlight overlapping nodes with a red rectangle
-                  gc.setStroke(Color.RED);
-                  gc.setLineWidth(2);
-                  gc.strokeRect(node.getX()-5, node.getY()-5, 40, 40);
-                  
-                  // Print debug message
-                  System.out.println("Debug: Regular node " + node.getName() + 
-                        " overlaps with break node " + breakNode.getName());
-               }
-            }
-         }
       }
       
       public void removeNodeFromGraph(t1_Node theNode)
@@ -817,23 +742,31 @@ public class AI
          theNode.destroy();
       }
       
-      public void updateBreak(Level.LevelIterator currentLevel) {
-    for(int i=0; i<breakNodes.size(); i++) {
-        // Remove the +30 offset since nodes are now placed at correct height
-        Level.TileWrapper tw = currentLevel.getSpecificTile(
-            breakNodes.get(i).getX()/30,
-            breakNodes.get(i).getY()/30
-        );
-        
-        if(tw == null) {
-            removeNodeFromGraph(breakNodes.get(i));
-            breakNodes.remove(i);
-            i--;
-        } else {
-            breakNodes.get(i).setBreakAmount(tw.getBreakTimer());
-        }
-    }
-}      
+      public void updateBreak(Level.LevelIterator currentLevel)
+      {
+         //loop over all break nodes
+         for(int i=0;i<breakNodes.size();i++)
+         {
+            //might have been better to leave the nodes in tileSpace.
+            //I had to figure out what was wrong with my math. 
+            //System.out.println(breakNodes.get(i).getX()/30+" "+(breakNodes.get(i).getY()+30)/30);
+            
+            //get a particular breakNode's tile wrapper.
+            Level.TileWrapper tw = currentLevel.getSpecificTile(breakNodes.get(i).getX()/30,(breakNodes.get(i).getY()+30)/30);
+            
+            if(tw == null) //so the node no longer exsits. this means it broke.
+            {
+               removeNodeFromGraph(breakNodes.get(i));
+               breakNodes.remove(i);
+               i--;
+            }
+            else //otherwise update the timer.
+            {
+               breakNodes.get(i).setBreakAmount(tw.getBreakTimer());
+            }
+         }
+      }
+      
       
       
       //takes in tilespace points
@@ -1114,13 +1047,13 @@ public class AI
       if(AI.this.currentPath != null) {
          for(int j = 0; j < AI.this.currentPath.size() - 1; j++) {
             if((this == AI.this.currentPath.get(j) && connections.get(i) == AI.this.currentPath.get(j+1)) ||
-               (this == AI.this.currentPath.get(j+1) && connections.get(i) == AI.this.currentPath.get(j))) {
+             (this == AI.this.currentPath.get(j+1) && connections.get(i) == AI.this.currentPath.get(j))) {
                isPathConnection = true;
                break;
             }
          }
       }
-
+   
       if(isPathConnection) {
          gc.setStroke(Color.WHITE);
       } else {
@@ -1161,38 +1094,39 @@ public class AI
          if(thisDirection == t1_MovementType.UP || thisDirection == t1_MovementType.DOWN) {
             for(int j=0; j<otherNode.connections.size(); j++) {
                if(otherNode.connections.get(j) == this &&
-                  ((thisDirection == t1_MovementType.UP && 
-                    otherNode.howToMove.get(j) == t1_MovementType.DOWN) ||
-                   (thisDirection == t1_MovementType.DOWN && 
-                    otherNode.howToMove.get(j) == t1_MovementType.UP))) {
+                 ((thisDirection == t1_MovementType.UP && 
+                   otherNode.howToMove.get(j) == t1_MovementType.DOWN) ||
+                  (thisDirection == t1_MovementType.DOWN && 
+                   otherNode.howToMove.get(j) == t1_MovementType.UP))) {
                   gc.setStroke(Color.PURPLE);
                   break;
                }
             }
          }
       }
-
+   
       gc.setLineWidth(3);
       gc.strokeLine(x+8+7, y+8+7, connections.get(i).x+8+7, connections.get(i).y+8+7);
    }
 
-   // Check if there's another node at the same position
-   boolean hasOverlappingNode = false;
+   // Check if this node has any incoming up connections
+   boolean hasUpwardConnection = false;
    for(t1_Node otherNode : theGraph.theNodes) {
-      if(otherNode != this && otherNode.x == this.x && otherNode.y == this.y) {
-         hasOverlappingNode = true;
-         break;
+      for(int i = 0; i < otherNode.connections.size(); i++) {
+         if(otherNode.connections.get(i) == this && 
+            otherNode.howToMove.get(i) == t1_MovementType.UP) {
+            hasUpwardConnection = true;
+            break;
+         }
       }
+      if(hasUpwardConnection) break;
    }
 
    // Draw the node itself
-   if(hasOverlappingNode){
-      // If there's an overlapping node, color it white
-      gc.setFill(Color.WHITE);
-   } else if(currentBreakAmount >= 0){
+   if(currentBreakAmount >= 0){
       // This is a break node, color it black
       gc.setFill(Color.BLACK);
-   } else if(currentBreakAmount == -9) {
+   }else if(currentBreakAmount == -9) {
       // Non-breakable node
       gc.setFill(fillColor);
    } else {
