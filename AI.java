@@ -424,7 +424,7 @@ public class AI
       ArrayList<t1_Node> breakNodes = new ArrayList<t1_Node>();
       
       t1_Node goal;
-   
+      
       //creating the graph as we talked about in class.
       public t1_GraphB(Level.LevelIterator graphToCreate) {
          HashMap<String,String> isThereATileThere = new HashMap<String,String>();
