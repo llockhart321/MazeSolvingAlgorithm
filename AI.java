@@ -177,9 +177,9 @@ public class AI
                );
             
             // If we're close enough to current target, move to next node
-            if(distanceToTarget < 40 && currentPathIndex > 1) {
-               currentPathIndex--;
-               targetNode = currentPath.get(currentPathIndex - 1);
+            if(whereIAm == currentPath.get(currentPathIndex - 1) && currentPathIndex > 1) {
+                currentPathIndex--;
+                targetNode = currentPath.get(currentPathIndex - 1);
             }
             
             // Check for edges around target node
@@ -224,10 +224,10 @@ public class AI
             double adjustedTargetX = targetNode.getX() + targetXOffset;
             
             // Expanded movement threshold to allow for smoother movement
-            if(px < adjustedTargetX - 2) {  // Reduced threshold from 5 to 2
+            if(px < adjustedTargetX) {  // Reduced threshold from 5 to 2
                aDown = false;
                dDown = true;
-            } else if(px > adjustedTargetX + 2) {  // Reduced threshold from 5 to 2
+            } else if(px > adjustedTargetX) {  // Reduced threshold from 5 to 2
                aDown = true;
                dDown = false;
             } else {
@@ -289,9 +289,9 @@ public class AI
                     Math.pow((py - targetNode.getY()), 2)
                 );
                 
-            if(distanceToTarget < 40 && currentPathIndex > 1) {
-               currentPathIndex--;
-               targetNode = currentPath.get(currentPathIndex - 1);
+            if(whereIAm == currentPath.get(currentPathIndex - 1) && currentPathIndex > 1) {
+                currentPathIndex--;
+                targetNode = currentPath.get(currentPathIndex - 1);
             }
                 
                 // Check for gaps
