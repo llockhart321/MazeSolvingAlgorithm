@@ -337,10 +337,10 @@ public class AI
          
                 // Handle horizontal movement
             if(!reachedMovementLimit) {
-               if(px < targetNode.getX() - 2) {
+               if(px < targetNode.getX()) {
                   aDown = false;
                   dDown = true;
-               } else if(px > targetNode.getX() + 2) {
+               } else if(px > targetNode.getX()) {
                   aDown = true;
                   dDown = false;
                } else {
@@ -476,6 +476,7 @@ public class AI
                isDirectlyAboveBreak.put(nodeAboveBreak, true);
                continue;
             }
+            
          
          // Generate vertical nodes with improved placement
             for(int xOffset = -1; xOffset <= 1; xOffset++) {
@@ -585,6 +586,21 @@ public class AI
                }
             }
          }
+         
+         // Check if there's another node at the same position
+         /*boolean hasOverlappingNode = false;
+         for(t1_Node otherNode : theGraph.theNodes) {
+            if(otherNode != this && otherNode.x == this.x && otherNode.y == this.y) {
+               hasOverlappingNode = true;
+               break;
+            }
+         }
+      
+         // Draw the node itself
+         if(hasOverlappingNode){
+            // If there's an overlapping node, color it white
+            gc.setFill(Color.WHITE);
+         }*/
       
       // Create connections
          for(int i=0; i<theNodes.size(); i++) {
@@ -1047,13 +1063,13 @@ public class AI
       if(AI.this.currentPath != null) {
          for(int j = 0; j < AI.this.currentPath.size() - 1; j++) {
             if((this == AI.this.currentPath.get(j) && connections.get(i) == AI.this.currentPath.get(j+1)) ||
-             (this == AI.this.currentPath.get(j+1) && connections.get(i) == AI.this.currentPath.get(j))) {
+               (this == AI.this.currentPath.get(j+1) && connections.get(i) == AI.this.currentPath.get(j))) {
                isPathConnection = true;
                break;
             }
          }
       }
-   
+
       if(isPathConnection) {
          gc.setStroke(Color.WHITE);
       } else {
@@ -1094,39 +1110,38 @@ public class AI
          if(thisDirection == t1_MovementType.UP || thisDirection == t1_MovementType.DOWN) {
             for(int j=0; j<otherNode.connections.size(); j++) {
                if(otherNode.connections.get(j) == this &&
-                 ((thisDirection == t1_MovementType.UP && 
-                   otherNode.howToMove.get(j) == t1_MovementType.DOWN) ||
-                  (thisDirection == t1_MovementType.DOWN && 
-                   otherNode.howToMove.get(j) == t1_MovementType.UP))) {
+                  ((thisDirection == t1_MovementType.UP && 
+                    otherNode.howToMove.get(j) == t1_MovementType.DOWN) ||
+                   (thisDirection == t1_MovementType.DOWN && 
+                    otherNode.howToMove.get(j) == t1_MovementType.UP))) {
                   gc.setStroke(Color.PURPLE);
                   break;
                }
             }
          }
       }
-   
+
       gc.setLineWidth(3);
       gc.strokeLine(x+8+7, y+8+7, connections.get(i).x+8+7, connections.get(i).y+8+7);
    }
 
-   // Check if this node has any incoming up connections
-   boolean hasUpwardConnection = false;
+   // Check if there's another node at the same position
+   boolean hasOverlappingNode = false;
    for(t1_Node otherNode : theGraph.theNodes) {
-      for(int i = 0; i < otherNode.connections.size(); i++) {
-         if(otherNode.connections.get(i) == this && 
-            otherNode.howToMove.get(i) == t1_MovementType.UP) {
-            hasUpwardConnection = true;
-            break;
-         }
+      if(otherNode != this && otherNode.x == this.x && otherNode.y == this.y) {
+         hasOverlappingNode = true;
+         break;
       }
-      if(hasUpwardConnection) break;
    }
 
    // Draw the node itself
-   if(currentBreakAmount >= 0){
+   if(hasOverlappingNode){
+      // If there's an overlapping node, color it white
+      gc.setFill(Color.WHITE);
+   } else if(currentBreakAmount >= 0){
       // This is a break node, color it black
       gc.setFill(Color.BLACK);
-   }else if(currentBreakAmount == -9) {
+   } else if(currentBreakAmount == -9) {
       // Non-breakable node
       gc.setFill(fillColor);
    } else {
